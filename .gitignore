@@ -487,4 +487,4 @@ $RECYCLE.BIN/
 .claude/settings.local.json
 
 # Release artifacts
-/xsheet-mark-v*.zip
+/releases/
