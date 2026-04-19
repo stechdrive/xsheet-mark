@@ -1,25 +1,31 @@
 # xsheet-mark
 
-A Windows overlay drawing app for annotating animation timesheets while a video keeps playing underneath.
-
-The app sits on top of your video player (Premiere, DaVinci Resolve, VLC, etc.) as an always-on-top, per-pixel-transparent window. Click, draw, and erase on the overlay without ever stealing focus from the video — the spacebar still play/pauses the clip while you mark timings.
+A transparent always-on-top drawing overlay for Windows. Write pen or mouse annotations on top of any running app; the overlay never interrupts the app underneath from receiving keyboard and pointer input.
 
 *日本語版: [README.ja.md](README.ja.md)*
 
+## What it's good for
+
+- **Spotting in a video editor** — scrub playback in Premiere / DaVinci Resolve / VLC etc., draw timing marks on top, export per-image PSD
+- **Annotating a reference image** — drop a still or sheet onto the canvas, mark it up, export
+- **Animation timesheet work** (the original use case) — load PSD timesheets, write pen notes, export PSD with annotations as a new top layer while original layers are preserved
+- **Markup on any other app** — slide decks, browser tabs, internal tools — the overlay stays above and passes keyboard through
+
 ## Features
 
-- **Focus-preserving overlay** — draw with pen or mouse without the video player losing keyboard control
+- **Transparent always-on-top overlay** that doesn't steal keyboard or pointer input from the app below
 - **Pen tablet support** — pressure-sensitive ink via Windows Ink (tested on HUION; Wacom-compatible)
-- **Infinite canvas** — load any number of timesheets side-by-side, pan and zoom freely
-- **Per-tool widths** — pen and eraser each remember their own line-width setting
-- **5 ink colors, 3 widths, point-based eraser** in the toolbar
+- **Infinite canvas** — drop any number of images side-by-side, pan and zoom freely
+- **5 ink colors, 3 widths, point-based eraser**; pen and eraser each remember their own width
 - **Undo / Redo** for strokes, image drops, image moves, and canvas clears
-- **Separate opacity for window and images** — see through the overlay or fade images to compare marks
+- **Separate opacity sliders** for the whole window and for loaded images
 - **Image formats** — PSD, PSB, JPG, PNG, BMP, GIF, TIFF, TGA
-- **PSD export (per image)** — each image on the canvas saves as its own PSD. PSD inputs preserve their original layer structure with annotations added on top; other formats produce a fresh PSD with the image and an `xsheet-mark` ink layer
-- **PSD capture (viewport snapshot)** — a separate button captures whatever is currently visible in the viewport (images + ink at current zoom/pan) as a single PSD with a **transparent background**, for compositing the notes back over other content
-- **Move images, annotations follow** — strokes drawn on an image travel with it when you drag the image
-- **Reset canvas** — clear images and strokes in one click; undoable if you change your mind
+- **PSD export, two modes**:
+  - **💾 per image** — each loaded image saves as its own PSD. PSD inputs preserve original layer structure and get an `xsheet-mark` ink layer added on top; other formats get a fresh PSD with image + ink
+  - **📷 viewport capture** — whatever is currently visible saves as a single PSD with a transparent background, for compositing the notes back into other work
+- **Move images, annotations follow** — strokes drawn on an image travel with it when you drag
+- **Reset canvas** in one click; undoable
+- **Remembers window size, position, and opacity** between sessions
 - **Bilingual UI** — Japanese / English, auto-detected from Windows display language
 
 ## System requirements
@@ -29,18 +35,17 @@ The app sits on top of your video player (Premiere, DaVinci Resolve, VLC, etc.) 
 
 ## Getting started
 
-1. Download `xsheet-mark.zip` from [Releases](https://github.com/stechdrive/xsheet-mark/releases)
-2. Extract anywhere and run `XsheetMark.exe`
-3. Start your video player and begin playback
-4. Drag one or more timesheet images onto the xsheet-mark window (or start drawing straight away on the empty canvas)
-5. Annotate with the pen tool — the video keeps playing and responds to keyboard shortcuts
+1. Download `xsheet-mark-v*.zip` from [Releases](https://github.com/stechdrive/xsheet-mark/releases)
+2. Extract — you get an `xsheet-mark/` folder containing `XsheetMark.exe` and its WPF native DLLs
+3. Run `XsheetMark.exe` from inside that folder (it needs its sibling DLLs)
+4. Drop images onto the window (or start drawing on the empty canvas), annotate, export with 💾 or 📷
 
 ## Usage
 
 ### Window chrome
 
 - **Top black bar** — drag to move the window
-- **— (minimize)** — collapses the window to the taskbar; click the taskbar icon to restore
+- **— (minimize)** — collapses to the taskbar; click the taskbar icon to restore
 - **✕ (close)** — quit the app
 - **Window edges** — grab to resize (cursor changes near each edge)
 - **Opacity panel (top-right)** — two sliders:
@@ -54,7 +59,7 @@ The app sits on top of your video player (Premiere, DaVinci Resolve, VLC, etc.) 
 | ↶ | Undo the last stroke / erase / image drop / image move / reset |
 | ↷ | Redo |
 | ✎ | Pen |
-| ⌫ | Eraser (removes partial strokes, not whole strokes; size follows the line-width selector) |
+| ⌫ | Eraser (removes partial strokes; size follows the line-width selector) |
 | ✥ | Move — drag an image to reposition it; strokes on the image follow |
 | ● | Ink color (black / red / blue / green / yellow) |
 | ▬ | Line width — pen and eraser remember their own |
@@ -75,7 +80,7 @@ The app sits on top of your video player (Premiere, DaVinci Resolve, VLC, etc.) 
 Two buttons, two intents:
 
 - 💾 **Export** — one PSD per image on the canvas, named `<source-name>-marked.psd`. PSD inputs keep their original layer structure; the embedded thumbnail and composite preview ("Maximize Compatibility" payload) are regenerated so file-browser previews show the annotated version. When the canvas has no images, this button falls back to a single viewport-sized PSD.
-- 📷 **Capture** — one viewport-sized PSD regardless of images, with a **transparent background**, for the "annotate on a transparent overlay and save" workflow.
+- 📷 **Capture** — one viewport-sized PSD regardless of images, with a **transparent background**, for overlay-annotation workflows where the marks will be composited over other content.
 
 Both write to a folder you pick, and file-name collisions get a numeric suffix (`-2`, `-3`, ...).
 
