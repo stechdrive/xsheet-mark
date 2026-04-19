@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using XsheetMark.Interop;
+using XsheetMark.Tools;
 using XsheetMark.Viewport;
 
 namespace XsheetMark;
@@ -15,15 +16,13 @@ public partial class MainWindow : Window
 {
     private const double ImageGap = 50;
 
-    private enum Tool { Pen, Eraser, Move }
-
     private static readonly string[] SupportedExtensions =
         { ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".tif" };
 
     private readonly CanvasViewport _viewport;
+    private readonly InkToolState _inkTools;
 
     private int _strokeCount;
-    private Tool _currentTool = Tool.Pen;
 
     private Image? _draggingImage;
     private Point _dragStartCursorWorld;
@@ -35,12 +34,13 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         _viewport = new CanvasViewport(Viewport, WorldScale, WorldTranslate);
+        _inkTools = new InkToolState(Ink)
+        {
+            Color = Color.FromRgb(0x20, 0x20, 0x20),
+        };
         WindowChromeInterop.Attach(this);
 
         Ink.StrokeCollected += OnStrokeCollected;
-        Ink.DefaultDrawingAttributes.Color = Color.FromRgb(0x20, 0x20, 0x20);
-        Ink.DefaultDrawingAttributes.Width = 2;
-        Ink.DefaultDrawingAttributes.Height = 2;
     }
 
     private void DragBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) =>
@@ -67,7 +67,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (_currentTool == Tool.Move && e.ChangedButton == MouseButton.Left
+        if (_inkTools.Tool == Tool.Move && e.ChangedButton == MouseButton.Left
             && e.OriginalSource is Image img && ImageLayer.Children.Contains(img))
         {
             _draggingImage = img;
@@ -119,53 +119,46 @@ public partial class MainWindow : Window
 
     private void OnToolChanged(object sender, RoutedEventArgs e)
     {
+        if (_inkTools is null || StatusText is null) return;
         if (sender is not RadioButton rb || rb.Tag is not string tagName) return;
-        if (Ink is null || StatusText is null) return;
 
-        _currentTool = tagName switch
+        var tool = tagName switch
         {
             "Eraser" => Tool.Eraser,
             "Move" => Tool.Move,
             _ => Tool.Pen,
         };
+        _inkTools.Tool = tool;
+        SyncWidthSelection();
+        StatusText.Text = $"Tool: {tool}";
+    }
 
-        switch (_currentTool)
-        {
-            case Tool.Pen:
-                Ink.EditingMode = InkCanvasEditingMode.Ink;
-                Ink.IsHitTestVisible = true;
-                break;
-            case Tool.Eraser:
-                Ink.EditingMode = InkCanvasEditingMode.EraseByStroke;
-                Ink.IsHitTestVisible = true;
-                break;
-            case Tool.Move:
-                Ink.EditingMode = InkCanvasEditingMode.None;
-                Ink.IsHitTestVisible = false;
-                break;
-        }
-
-        StatusText.Text = $"Tool: {_currentTool}";
+    private void SyncWidthSelection()
+    {
+        if (WidthThin is null || WidthMedium is null || WidthThick is null) return;
+        var w = _inkTools.Width;
+        WidthThin.IsChecked = Math.Abs(w - 2) < 1e-6;
+        WidthMedium.IsChecked = Math.Abs(w - 5) < 1e-6;
+        WidthThick.IsChecked = Math.Abs(w - 10) < 1e-6;
     }
 
     private void OnColorChanged(object sender, RoutedEventArgs e)
     {
-        if (Ink is null) return;
+        if (_inkTools is null) return;
         if (sender is RadioButton rb && rb.Background is SolidColorBrush brush)
         {
-            Ink.DefaultDrawingAttributes.Color = brush.Color;
+            _inkTools.Color = brush.Color;
         }
     }
 
     private void OnWidthChanged(object sender, RoutedEventArgs e)
     {
-        if (Ink is null) return;
+        if (_inkTools is null) return;
         if (sender is RadioButton rb
             && rb.Tag is string tag
             && double.TryParse(tag, NumberStyles.Float, CultureInfo.InvariantCulture, out var width))
         {
-            Ink.DefaultDrawingAttributes.Width = width;
-            Ink.DefaultDrawingAttributes.Height = width;
+            _inkTools.Width = width;
         }
     }
 

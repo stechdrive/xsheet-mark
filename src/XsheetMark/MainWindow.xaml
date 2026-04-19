@@ -212,7 +212,8 @@
 
                     <Rectangle Height="1" Margin="4,6" Fill="#40FFFFFF"/>
 
-                    <RadioButton Style="{StaticResource ToolButton}"
+                    <RadioButton x:Name="WidthThin"
+                                 Style="{StaticResource ToolButton}"
                                  GroupName="Widths"
                                  Tag="2"
                                  IsChecked="True"
@@ -220,14 +221,16 @@
                                  ToolTip="Thin">
                         <Rectangle Width="24" Height="2" Fill="#E8E8E8"/>
                     </RadioButton>
-                    <RadioButton Style="{StaticResource ToolButton}"
+                    <RadioButton x:Name="WidthMedium"
+                                 Style="{StaticResource ToolButton}"
                                  GroupName="Widths"
                                  Tag="5"
                                  Checked="OnWidthChanged"
                                  ToolTip="Medium">
                         <Rectangle Width="24" Height="5" Fill="#E8E8E8"/>
                     </RadioButton>
-                    <RadioButton Style="{StaticResource ToolButton}"
+                    <RadioButton x:Name="WidthThick"
+                                 Style="{StaticResource ToolButton}"
                                  GroupName="Widths"
                                  Tag="10"
                                  Checked="OnWidthChanged"
