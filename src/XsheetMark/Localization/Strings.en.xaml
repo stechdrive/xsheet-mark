@@ -1,0 +1,33 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:s="clr-namespace:System;assembly=mscorlib">
+    <s:String x:Key="Tooltip.Pen">Pen</s:String>
+    <s:String x:Key="Tooltip.Eraser">Eraser</s:String>
+    <s:String x:Key="Tooltip.Move">Move images</s:String>
+    <s:String x:Key="Tooltip.ColorBlack">Black</s:String>
+    <s:String x:Key="Tooltip.ColorRed">Red</s:String>
+    <s:String x:Key="Tooltip.ColorBlue">Blue</s:String>
+    <s:String x:Key="Tooltip.ColorGreen">Green</s:String>
+    <s:String x:Key="Tooltip.ColorYellow">Yellow</s:String>
+    <s:String x:Key="Tooltip.WidthThin">Thin</s:String>
+    <s:String x:Key="Tooltip.WidthMedium">Medium</s:String>
+    <s:String x:Key="Tooltip.WidthThick">Thick</s:String>
+    <s:String x:Key="Tooltip.FitAll">Fit all</s:String>
+    <s:String x:Key="Tooltip.Close">Close</s:String>
+
+    <s:String x:Key="Status.Initial">Drop images  ·  wheel = zoom  ·  mid/right drag = pan</s:String>
+    <s:String x:Key="Status.Zoom">Zoom: {0:F0}%</s:String>
+    <s:String x:Key="Status.Tool">Tool: {0}</s:String>
+    <s:String x:Key="Status.FitAt">   fit at {0:F0}%</s:String>
+    <s:String x:Key="Status.Loaded1">Loaded: {0} ({1}×{2})</s:String>
+    <s:String x:Key="Status.LoadedMany">Loaded {0} images</s:String>
+    <s:String x:Key="Status.DropFailed">Drop failed: {0} file(s), unsupported or unreadable</s:String>
+    <s:String x:Key="Status.Skipped">   [{0} skipped]</s:String>
+    <s:String x:Key="Status.StrokeInfo">Strokes: {0}   pressure: {1:F2}–{2:F2} {3}   zoom: {4:F0}%</s:String>
+    <s:String x:Key="Pressure.Flat">(flat)</s:String>
+    <s:String x:Key="Pressure.Varies">(varies)</s:String>
+
+    <s:String x:Key="ToolName.Pen">Pen</s:String>
+    <s:String x:Key="ToolName.Eraser">Eraser</s:String>
+    <s:String x:Key="ToolName.Move">Move</s:String>
+</ResourceDictionary>

@@ -1,0 +1,33 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:s="clr-namespace:System;assembly=mscorlib">
+    <s:String x:Key="Tooltip.Pen">ペン</s:String>
+    <s:String x:Key="Tooltip.Eraser">消しゴム</s:String>
+    <s:String x:Key="Tooltip.Move">画像を移動</s:String>
+    <s:String x:Key="Tooltip.ColorBlack">黒</s:String>
+    <s:String x:Key="Tooltip.ColorRed">赤</s:String>
+    <s:String x:Key="Tooltip.ColorBlue">青</s:String>
+    <s:String x:Key="Tooltip.ColorGreen">緑</s:String>
+    <s:String x:Key="Tooltip.ColorYellow">黄</s:String>
+    <s:String x:Key="Tooltip.WidthThin">細</s:String>
+    <s:String x:Key="Tooltip.WidthMedium">中</s:String>
+    <s:String x:Key="Tooltip.WidthThick">太</s:String>
+    <s:String x:Key="Tooltip.FitAll">全体表示</s:String>
+    <s:String x:Key="Tooltip.Close">閉じる</s:String>
+
+    <s:String x:Key="Status.Initial">画像をドロップ  ·  ホイール = ズーム  ·  中/右ドラッグ = パン</s:String>
+    <s:String x:Key="Status.Zoom">ズーム: {0:F0}%</s:String>
+    <s:String x:Key="Status.Tool">ツール: {0}</s:String>
+    <s:String x:Key="Status.FitAt">   fit {0:F0}%</s:String>
+    <s:String x:Key="Status.Loaded1">読込: {0} ({1}×{2})</s:String>
+    <s:String x:Key="Status.LoadedMany">{0} 枚読み込みました</s:String>
+    <s:String x:Key="Status.DropFailed">読込失敗: {0} ファイル (非対応または読み込み不可)</s:String>
+    <s:String x:Key="Status.Skipped">   [{0} 件スキップ]</s:String>
+    <s:String x:Key="Status.StrokeInfo">ストローク: {0}   筆圧: {1:F2}–{2:F2} {3}   ズーム: {4:F0}%</s:String>
+    <s:String x:Key="Pressure.Flat">(一定)</s:String>
+    <s:String x:Key="Pressure.Varies">(変動)</s:String>
+
+    <s:String x:Key="ToolName.Pen">ペン</s:String>
+    <s:String x:Key="ToolName.Eraser">消しゴム</s:String>
+    <s:String x:Key="ToolName.Move">移動</s:String>
+</ResourceDictionary>

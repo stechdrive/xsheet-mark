@@ -127,7 +127,8 @@
                             Width="40"
                             FontSize="14"
                             Style="{StaticResource ChromeButton}"
-                            Click="Close_Click"/>
+                            Click="Close_Click"
+                            ToolTip="{DynamicResource Tooltip.Close}"/>
                     <TextBlock Text="xsheet-mark"
                                Foreground="#E8E8E8"
                                VerticalAlignment="Center"
@@ -144,7 +145,7 @@
                     CornerRadius="4"
                     IsHitTestVisible="False">
                 <TextBlock x:Name="StatusText"
-                           Text="Drop images  ·  wheel = zoom  ·  mid/right drag = pan"
+                           Text="{DynamicResource Status.Initial}"
                            Foreground="#E8E8E8"
                            FontFamily="Consolas"
                            FontSize="12"/>
@@ -165,21 +166,21 @@
                                  Tag="Pen"
                                  IsChecked="True"
                                  Checked="OnToolChanged"
-                                 ToolTip="Pen"/>
+                                 ToolTip="{DynamicResource Tooltip.Pen}"/>
                     <RadioButton x:Name="EraserTool"
                                  Style="{StaticResource ToolButton}"
                                  GroupName="Tools"
                                  Content="⌫"
                                  Tag="Eraser"
                                  Checked="OnToolChanged"
-                                 ToolTip="Eraser"/>
+                                 ToolTip="{DynamicResource Tooltip.Eraser}"/>
                     <RadioButton x:Name="MoveTool"
                                  Style="{StaticResource ToolButton}"
                                  GroupName="Tools"
                                  Content="✥"
                                  Tag="Move"
                                  Checked="OnToolChanged"
-                                 ToolTip="Move images"/>
+                                 ToolTip="{DynamicResource Tooltip.Move}"/>
 
                     <Rectangle Height="1" Margin="4,6" Fill="#40FFFFFF"/>
 
@@ -188,27 +189,27 @@
                                  Background="#202020"
                                  IsChecked="True"
                                  Checked="OnColorChanged"
-                                 ToolTip="Black"/>
+                                 ToolTip="{DynamicResource Tooltip.ColorBlack}"/>
                     <RadioButton Style="{StaticResource ColorSwatch}"
                                  GroupName="Colors"
                                  Background="#E04040"
                                  Checked="OnColorChanged"
-                                 ToolTip="Red"/>
+                                 ToolTip="{DynamicResource Tooltip.ColorRed}"/>
                     <RadioButton Style="{StaticResource ColorSwatch}"
                                  GroupName="Colors"
                                  Background="#4080E0"
                                  Checked="OnColorChanged"
-                                 ToolTip="Blue"/>
+                                 ToolTip="{DynamicResource Tooltip.ColorBlue}"/>
                     <RadioButton Style="{StaticResource ColorSwatch}"
                                  GroupName="Colors"
                                  Background="#50B050"
                                  Checked="OnColorChanged"
-                                 ToolTip="Green"/>
+                                 ToolTip="{DynamicResource Tooltip.ColorGreen}"/>
                     <RadioButton Style="{StaticResource ColorSwatch}"
                                  GroupName="Colors"
                                  Background="#E0C040"
                                  Checked="OnColorChanged"
-                                 ToolTip="Yellow"/>
+                                 ToolTip="{DynamicResource Tooltip.ColorYellow}"/>
 
                     <Rectangle Height="1" Margin="4,6" Fill="#40FFFFFF"/>
 
@@ -218,7 +219,7 @@
                                  Tag="2"
                                  IsChecked="True"
                                  Checked="OnWidthChanged"
-                                 ToolTip="Thin">
+                                 ToolTip="{DynamicResource Tooltip.WidthThin}">
                         <Rectangle Width="24" Height="2" Fill="#E8E8E8"/>
                     </RadioButton>
                     <RadioButton x:Name="WidthMedium"
@@ -226,7 +227,7 @@
                                  GroupName="Widths"
                                  Tag="5"
                                  Checked="OnWidthChanged"
-                                 ToolTip="Medium">
+                                 ToolTip="{DynamicResource Tooltip.WidthMedium}">
                         <Rectangle Width="24" Height="5" Fill="#E8E8E8"/>
                     </RadioButton>
                     <RadioButton x:Name="WidthThick"
@@ -234,7 +235,7 @@
                                  GroupName="Widths"
                                  Tag="10"
                                  Checked="OnWidthChanged"
-                                 ToolTip="Thick">
+                                 ToolTip="{DynamicResource Tooltip.WidthThick}">
                         <Rectangle Width="24" Height="10" Fill="#E8E8E8"/>
                     </RadioButton>
 
@@ -245,7 +246,7 @@
                             Width="40" Height="40"
                             FontSize="18"
                             Click="FitAll_Click"
-                            ToolTip="Fit all"/>
+                            ToolTip="{DynamicResource Tooltip.FitAll}"/>
                 </StackPanel>
             </Border>
         </Grid>

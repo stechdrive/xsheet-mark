@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using XsheetMark.Interop;
+using XsheetMark.Localization;
 using XsheetMark.Tools;
 using XsheetMark.Viewport;
 using XsheetMark.Workspace;
@@ -45,7 +46,7 @@ public partial class MainWindow : Window
         var cursor = e.GetPosition(Viewport);
         var factor = Math.Pow(1.1, e.Delta / 120.0);
         _viewport.ZoomAt(cursor, factor);
-        StatusText.Text = $"Zoom: {_viewport.Scale * 100:F0}%";
+        StatusText.Text = Localizer.Format("Status.Zoom", _viewport.Scale * 100);
         e.Handled = true;
     }
 
@@ -113,7 +114,14 @@ public partial class MainWindow : Window
         };
         _inkTools.Tool = tool;
         SyncWidthSelection();
-        StatusText.Text = $"Tool: {tool}";
+
+        var toolName = tool switch
+        {
+            Tool.Eraser => Localizer.Get("ToolName.Eraser"),
+            Tool.Move => Localizer.Get("ToolName.Move"),
+            _ => Localizer.Get("ToolName.Pen"),
+        };
+        StatusText.Text = Localizer.Format("Status.Tool", toolName);
     }
 
     private void SyncWidthSelection()
@@ -193,13 +201,16 @@ public partial class MainWindow : Window
         }
 
         var fitSuffix = wasEmpty && loaded > 0
-            ? $"   fit at {_viewport.Scale * 100:F0}%"
+            ? Localizer.Format("Status.FitAt", _viewport.Scale * 100)
+            : "";
+        var skippedSuffix = failed > 0
+            ? Localizer.Format("Status.Skipped", failed)
             : "";
         StatusText.Text = loaded switch
         {
-            0 => $"Drop failed: {failed} file(s), unsupported or unreadable",
-            1 => $"Loaded: {lastFile} ({lastW}×{lastH})" + (failed > 0 ? $"   [{failed} skipped]" : "") + fitSuffix,
-            _ => $"Loaded {loaded} images" + (failed > 0 ? $"   [{failed} skipped]" : "") + fitSuffix,
+            0 => Localizer.Format("Status.DropFailed", failed),
+            1 => Localizer.Format("Status.Loaded1", lastFile ?? "", lastW, lastH) + skippedSuffix + fitSuffix,
+            _ => Localizer.Format("Status.LoadedMany", loaded) + skippedSuffix + fitSuffix,
         };
     }
 
@@ -216,7 +227,9 @@ public partial class MainWindow : Window
         }
 
         var flat = Math.Abs(maxP - minP) < 0.001f;
-        StatusText.Text =
-            $"Strokes: {_strokeCount}   pressure: {minP:F2}–{maxP:F2} {(flat ? "(flat)" : "(varies)")}   zoom: {_viewport.Scale * 100:F0}%";
+        var pressureLabel = flat ? Localizer.Get("Pressure.Flat") : Localizer.Get("Pressure.Varies");
+        StatusText.Text = Localizer.Format(
+            "Status.StrokeInfo",
+            _strokeCount, minP, maxP, pressureLabel, _viewport.Scale * 100);
     }
 }
