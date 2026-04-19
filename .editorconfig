@@ -14,6 +14,11 @@ indent_size = 2
 [*.md]
 trim_trailing_whitespace = false
 
+[src/XsheetMark/Vendor/**/*.cs]
+# Vendored third-party code — disable all analyzers and style enforcement.
+generated_code = true
+dotnet_analyzer_diagnostic.severity = none
+
 [*.cs]
 # Language features
 dotnet_sort_system_directives_first = true
@@ -35,3 +40,6 @@ dotnet_diagnostic.CA1303.severity = none
 dotnet_diagnostic.CA1812.severity = none
 # CA1051: Do not declare visible instance fields — relaxed for private/internal
 dotnet_diagnostic.CA1051.severity = none
+# CA1859: Prefer concrete types over interfaces — micro-perf, conflicts with
+# legitimate polymorphism (e.g. loaders returning a common BitmapSource)
+dotnet_diagnostic.CA1859.severity = none

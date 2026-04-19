@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Ink;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using XsheetMark.Psd;
 
 namespace XsheetMark.Workspace;
 
@@ -21,7 +22,9 @@ public class ImageWorkspace
     private const double ImageGap = 50;
 
     private static readonly string[] SupportedExtensions =
-        { ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".tif" };
+        { ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".tif", ".psd", ".psb" };
+
+    private static readonly string[] PsdExtensions = { ".psd", ".psb" };
 
     private readonly Canvas _imageLayer;
     private readonly InkCanvas _inkCanvas;
@@ -57,6 +60,33 @@ public class ImageWorkspace
         var ext = Path.GetExtension(path).ToLowerInvariant();
         if (Array.IndexOf(SupportedExtensions, ext) < 0) return false;
 
+        var source = Array.IndexOf(PsdExtensions, ext) >= 0
+            ? PsdIO.TryLoadComposite(path)
+            : TryLoadStandardBitmap(path);
+        if (source is null) return false;
+
+        var img = new Image
+        {
+            Source = source,
+            Width = source.PixelWidth,
+            Height = source.PixelHeight,
+            Stretch = Stretch.Fill,
+        };
+
+        double x = GetNextImageX();
+        double y = 0;
+        Canvas.SetLeft(img, x);
+        Canvas.SetTop(img, y);
+        _imageLayer.Children.Add(img);
+
+        pixelWidth = source.PixelWidth;
+        pixelHeight = source.PixelHeight;
+        bounds = new Rect(x, y, pixelWidth, pixelHeight);
+        return true;
+    }
+
+    private static BitmapSource? TryLoadStandardBitmap(string path)
+    {
         try
         {
             var bmp = new BitmapImage();
@@ -65,29 +95,11 @@ public class ImageWorkspace
             bmp.CacheOption = BitmapCacheOption.OnLoad;
             bmp.EndInit();
             bmp.Freeze();
-
-            var img = new Image
-            {
-                Source = bmp,
-                Width = bmp.PixelWidth,
-                Height = bmp.PixelHeight,
-                Stretch = Stretch.Fill,
-            };
-
-            double x = GetNextImageX();
-            double y = 0;
-            Canvas.SetLeft(img, x);
-            Canvas.SetTop(img, y);
-            _imageLayer.Children.Add(img);
-
-            pixelWidth = bmp.PixelWidth;
-            pixelHeight = bmp.PixelHeight;
-            bounds = new Rect(x, y, pixelWidth, pixelHeight);
-            return true;
+            return bmp;
         }
         catch
         {
-            return false;
+            return null;
         }
     }
 
