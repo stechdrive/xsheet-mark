@@ -13,6 +13,7 @@
     <s:String x:Key="Tooltip.WidthMedium">中</s:String>
     <s:String x:Key="Tooltip.WidthThick">太</s:String>
     <s:String x:Key="Tooltip.FitAll">全体表示</s:String>
+    <s:String x:Key="Tooltip.ExportPsd">PSD で書き出し</s:String>
     <s:String x:Key="Tooltip.Close">閉じる</s:String>
 
     <s:String x:Key="Status.Initial">画像をドロップ  ·  ホイール = ズーム  ·  中/右ドラッグ = パン</s:String>
@@ -30,4 +31,11 @@
     <s:String x:Key="ToolName.Pen">ペン</s:String>
     <s:String x:Key="ToolName.Eraser">消しゴム</s:String>
     <s:String x:Key="ToolName.Move">移動</s:String>
+
+    <s:String x:Key="Export.InkLayerName">xsheet-mark</s:String>
+    <s:String x:Key="Export.ImageLayerName">画像</s:String>
+    <s:String x:Key="Export.FolderDialogTitle">PSD 書き出し先のフォルダを選択</s:String>
+    <s:String x:Key="Export.Success">{0} 件の PSD を書き出しました</s:String>
+    <s:String x:Key="Export.PartialSuccess">{0} 件書き出し、{1} 件失敗</s:String>
+    <s:String x:Key="Export.NoImages">書き出す画像がありません</s:String>
 </ResourceDictionary>

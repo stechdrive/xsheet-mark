@@ -159,6 +159,30 @@ public partial class MainWindow : Window
         if (bounds.HasValue) _viewport.FitToBounds(bounds.Value);
     }
 
+    private void ExportPsd_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_workspace.HasImages)
+        {
+            StatusText.Text = Localizer.Get("Export.NoImages");
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.OpenFolderDialog
+        {
+            Title = Localizer.Get("Export.FolderDialogTitle"),
+        };
+        if (dialog.ShowDialog(this) != true) return;
+
+        var outcome = _workspace.ExportAllPsds(
+            dialog.FolderName,
+            Localizer.Get("Export.InkLayerName"),
+            Localizer.Get("Export.ImageLayerName"));
+
+        StatusText.Text = outcome.Failed == 0
+            ? Localizer.Format("Export.Success", outcome.Success)
+            : Localizer.Format("Export.PartialSuccess", outcome.Success, outcome.Failed);
+    }
+
     private void OnDragOver(object sender, DragEventArgs e)
     {
         e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop)

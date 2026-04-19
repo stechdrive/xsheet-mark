@@ -247,6 +247,15 @@
                             FontSize="18"
                             Click="FitAll_Click"
                             ToolTip="{DynamicResource Tooltip.FitAll}"/>
+
+                    <Rectangle Height="1" Margin="4,6" Fill="#40FFFFFF"/>
+
+                    <Button Style="{StaticResource ChromeButton}"
+                            Content="💾"
+                            Width="40" Height="40"
+                            FontSize="16"
+                            Click="ExportPsd_Click"
+                            ToolTip="{DynamicResource Tooltip.ExportPsd}"/>
                 </StackPanel>
             </Border>
         </Grid>

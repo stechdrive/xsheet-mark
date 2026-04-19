@@ -13,6 +13,7 @@
     <s:String x:Key="Tooltip.WidthMedium">Medium</s:String>
     <s:String x:Key="Tooltip.WidthThick">Thick</s:String>
     <s:String x:Key="Tooltip.FitAll">Fit all</s:String>
+    <s:String x:Key="Tooltip.ExportPsd">Export as PSD</s:String>
     <s:String x:Key="Tooltip.Close">Close</s:String>
 
     <s:String x:Key="Status.Initial">Drop images  ·  wheel = zoom  ·  mid/right drag = pan</s:String>
@@ -30,4 +31,11 @@
     <s:String x:Key="ToolName.Pen">Pen</s:String>
     <s:String x:Key="ToolName.Eraser">Eraser</s:String>
     <s:String x:Key="ToolName.Move">Move</s:String>
+
+    <s:String x:Key="Export.InkLayerName">xsheet-mark</s:String>
+    <s:String x:Key="Export.ImageLayerName">image</s:String>
+    <s:String x:Key="Export.FolderDialogTitle">Choose output folder for PSD export</s:String>
+    <s:String x:Key="Export.Success">Exported {0} PSD file(s)</s:String>
+    <s:String x:Key="Export.PartialSuccess">Exported {0} PSD file(s), {1} failed</s:String>
+    <s:String x:Key="Export.NoImages">No images to export</s:String>
 </ResourceDictionary>

@@ -16,4 +16,8 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Pfim" Version="0.11.3" />
+  </ItemGroup>
+
 </Project>

@@ -28,9 +28,8 @@ public class InkToolState
     {
         ArgumentNullException.ThrowIfNull(ink);
         _ink = ink;
-        ApplyTool();
         ApplyColor();
-        ApplyWidth();
+        ApplyTool();
     }
 
     public Tool Tool
@@ -84,6 +83,10 @@ public class InkToolState
                 _ink.IsHitTestVisible = false;
                 break;
         }
+        // Re-apply width so the cursor (and pen drawing attrs) reflect the
+        // current tool's width. Works around InkCanvas caching the cursor
+        // shape from the previous mode in some cases.
+        ApplyWidth();
     }
 
     private void ApplyColor() => _ink.DefaultDrawingAttributes.Color = _color;
