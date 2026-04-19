@@ -5,29 +5,20 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using XsheetMark.Interop;
 using XsheetMark.Tools;
 using XsheetMark.Viewport;
+using XsheetMark.Workspace;
 
 namespace XsheetMark;
 
 public partial class MainWindow : Window
 {
-    private const double ImageGap = 50;
-
-    private static readonly string[] SupportedExtensions =
-        { ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".tif" };
-
     private readonly CanvasViewport _viewport;
     private readonly InkToolState _inkTools;
+    private readonly ImageWorkspace _workspace;
 
     private int _strokeCount;
-
-    private Image? _draggingImage;
-    private Point _dragStartCursorWorld;
-    private double _dragStartImageLeft;
-    private double _dragStartImageTop;
 
     public MainWindow()
     {
@@ -38,6 +29,7 @@ public partial class MainWindow : Window
         {
             Color = Color.FromRgb(0x20, 0x20, 0x20),
         };
+        _workspace = new ImageWorkspace(ImageLayer, Ink);
         WindowChromeInterop.Attach(this);
 
         Ink.StrokeCollected += OnStrokeCollected;
@@ -68,14 +60,9 @@ public partial class MainWindow : Window
         }
 
         if (_inkTools.Tool == Tool.Move && e.ChangedButton == MouseButton.Left
-            && e.OriginalSource is Image img && ImageLayer.Children.Contains(img))
+            && e.OriginalSource is Image img
+            && _workspace.TryBeginMove(img, e.GetPosition(ImageLayer)))
         {
-            _draggingImage = img;
-            _dragStartCursorWorld = e.GetPosition(ImageLayer);
-            _dragStartImageLeft = Canvas.GetLeft(img);
-            if (double.IsNaN(_dragStartImageLeft)) _dragStartImageLeft = 0;
-            _dragStartImageTop = Canvas.GetTop(img);
-            if (double.IsNaN(_dragStartImageTop)) _dragStartImageTop = 0;
             Viewport.CaptureMouse();
             e.Handled = true;
         }
@@ -89,13 +76,9 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (_draggingImage != null)
+        if (_workspace.IsMoving)
         {
-            var current = e.GetPosition(ImageLayer);
-            var dx = current.X - _dragStartCursorWorld.X;
-            var dy = current.Y - _dragStartCursorWorld.Y;
-            Canvas.SetLeft(_draggingImage, _dragStartImageLeft + dx);
-            Canvas.SetTop(_draggingImage, _dragStartImageTop + dy);
+            _workspace.UpdateMove(e.GetPosition(ImageLayer));
         }
     }
 
@@ -109,9 +92,9 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (_draggingImage != null && e.ChangedButton == MouseButton.Left)
+        if (_workspace.IsMoving && e.ChangedButton == MouseButton.Left)
         {
-            _draggingImage = null;
+            _workspace.EndMove();
             Viewport.ReleaseMouseCapture();
             e.Handled = true;
         }
@@ -164,17 +147,7 @@ public partial class MainWindow : Window
 
     private void FitAll_Click(object sender, RoutedEventArgs e)
     {
-        Rect? bounds = null;
-        foreach (UIElement el in ImageLayer.Children)
-        {
-            if (el is not Image img) continue;
-            double left = Canvas.GetLeft(img);
-            if (double.IsNaN(left)) left = 0;
-            double top = Canvas.GetTop(img);
-            if (double.IsNaN(top)) top = 0;
-            var rect = new Rect(left, top, img.Width, img.Height);
-            bounds = bounds.HasValue ? Rect.Union(bounds.Value, rect) : rect;
-        }
+        var bounds = _workspace.GetAllBounds();
         if (bounds.HasValue) _viewport.FitToBounds(bounds.Value);
     }
 
@@ -191,7 +164,7 @@ public partial class MainWindow : Window
         if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
 
         var files = (string[])e.Data.GetData(DataFormats.FileDrop);
-        bool wasEmpty = ImageLayer.Children.Count == 0;
+        bool wasEmpty = !_workspace.HasImages;
 
         int loaded = 0, failed = 0;
         Rect? unionBounds = null;
@@ -200,7 +173,7 @@ public partial class MainWindow : Window
 
         foreach (var file in files)
         {
-            if (TryAddImage(file, out var w, out var h, out var rect))
+            if (_workspace.TryAddImage(file, out var w, out var h, out var rect))
             {
                 loaded++;
                 lastFile = Path.GetFileName(file);
@@ -228,62 +201,6 @@ public partial class MainWindow : Window
             1 => $"Loaded: {lastFile} ({lastW}×{lastH})" + (failed > 0 ? $"   [{failed} skipped]" : "") + fitSuffix,
             _ => $"Loaded {loaded} images" + (failed > 0 ? $"   [{failed} skipped]" : "") + fitSuffix,
         };
-    }
-
-    private bool TryAddImage(string path, out int pixelWidth, out int pixelHeight, out Rect bounds)
-    {
-        pixelWidth = pixelHeight = 0;
-        bounds = default;
-
-        var ext = Path.GetExtension(path).ToLowerInvariant();
-        if (Array.IndexOf(SupportedExtensions, ext) < 0) return false;
-
-        try
-        {
-            var bmp = new BitmapImage();
-            bmp.BeginInit();
-            bmp.UriSource = new Uri(path);
-            bmp.CacheOption = BitmapCacheOption.OnLoad;
-            bmp.EndInit();
-            bmp.Freeze();
-
-            var img = new Image
-            {
-                Source = bmp,
-                Width = bmp.PixelWidth,
-                Height = bmp.PixelHeight,
-                Stretch = Stretch.Fill,
-            };
-
-            double x = GetNextImageX();
-            double y = 0;
-            Canvas.SetLeft(img, x);
-            Canvas.SetTop(img, y);
-            ImageLayer.Children.Add(img);
-
-            pixelWidth = bmp.PixelWidth;
-            pixelHeight = bmp.PixelHeight;
-            bounds = new Rect(x, y, pixelWidth, pixelHeight);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    private double GetNextImageX()
-    {
-        double maxRight = 0;
-        foreach (UIElement el in ImageLayer.Children)
-        {
-            if (el is not Image img) continue;
-            double left = Canvas.GetLeft(img);
-            if (double.IsNaN(left)) left = 0;
-            double right = left + img.Width + ImageGap;
-            if (right > maxRight) maxRight = right;
-        }
-        return maxRight;
     }
 
     private void OnStrokeCollected(object sender, InkCanvasStrokeCollectedEventArgs e)
