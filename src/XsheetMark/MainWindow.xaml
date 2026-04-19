@@ -112,7 +112,7 @@
                             <TranslateTransform x:Name="WorldTranslate" X="0" Y="0"/>
                         </TransformGroup>
                     </Grid.RenderTransform>
-                    <Canvas x:Name="ImageLayer"/>
+                    <Canvas x:Name="ImageLayer" RenderOptions.BitmapScalingMode="HighQuality"/>
                     <InkCanvas x:Name="Ink" Background="Transparent"/>
                 </Grid>
             </Canvas>
