@@ -485,3 +485,6 @@ $RECYCLE.BIN/
 
 # Claude Code personal settings (do not commit)
 .claude/settings.local.json
+
+# Release artifacts
+/xsheet-mark-v*.zip
