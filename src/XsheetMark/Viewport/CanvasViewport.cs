@@ -25,6 +25,15 @@ public class CanvasViewport
     public bool IsPanning { get; private set; }
     public double Scale => _scale.ScaleX;
 
+    /// <summary>
+    /// Affine transform that maps world coordinates to viewport coordinates.
+    /// Push this as the current drawing transform when rendering world
+    /// content (e.g., strokes) into a viewport-sized raster.
+    /// </summary>
+    public Matrix WorldToViewportMatrix => new(
+        _scale.ScaleX, 0, 0, _scale.ScaleY,
+        _translate.X, _translate.Y);
+
     public CanvasViewport(FrameworkElement viewportElement, ScaleTransform scale, TranslateTransform translate)
     {
         ArgumentNullException.ThrowIfNull(viewportElement);

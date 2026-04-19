@@ -76,6 +76,35 @@ public partial class MainWindow : Window
     private void Redo_Click(object sender, RoutedEventArgs e) => _undoStack.Redo();
     private void Reset_Click(object sender, RoutedEventArgs e) => _workspace.Reset();
 
+    private void CapturePsd_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_workspace.HasImages && !_workspace.HasStrokes)
+        {
+            StatusText.Text = Localizer.Get("Export.NoContent");
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.OpenFolderDialog
+        {
+            Title = Localizer.Get("Export.FolderDialogTitle"),
+        };
+        if (dialog.ShowDialog(this) != true) return;
+
+        int w = Math.Max(1, (int)Viewport.ActualWidth);
+        int h = Math.Max(1, (int)Viewport.ActualHeight);
+
+        var outcome = _workspace.ExportViewportAsPsd(
+            dialog.FolderName,
+            Localizer.Get("Export.InkLayerName"),
+            Localizer.Get("Export.BackgroundLayerName"),
+            w, h,
+            _viewport.WorldToViewportMatrix);
+
+        StatusText.Text = outcome.Failed == 0
+            ? Localizer.Format("Export.Success", outcome.Success)
+            : Localizer.Format("Export.PartialSuccess", outcome.Success, outcome.Failed);
+    }
+
     private void DragBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) =>
         WindowChromeInterop.BeginTitleBarDrag(this);
 
@@ -212,9 +241,9 @@ public partial class MainWindow : Window
 
     private void ExportPsd_Click(object sender, RoutedEventArgs e)
     {
-        if (!_workspace.HasImages)
+        if (!_workspace.HasImages && !_workspace.HasStrokes)
         {
-            StatusText.Text = Localizer.Get("Export.NoImages");
+            StatusText.Text = Localizer.Get("Export.NoContent");
             return;
         }
 
@@ -224,10 +253,27 @@ public partial class MainWindow : Window
         };
         if (dialog.ShowDialog(this) != true) return;
 
-        var outcome = _workspace.ExportAllPsds(
-            dialog.FolderName,
-            Localizer.Get("Export.InkLayerName"),
-            Localizer.Get("Export.ImageLayerName"));
+        var inkLayerName = Localizer.Get("Export.InkLayerName");
+        ImageWorkspace.ExportOutcome outcome;
+
+        if (_workspace.HasImages)
+        {
+            outcome = _workspace.ExportAllPsds(
+                dialog.FolderName,
+                inkLayerName,
+                Localizer.Get("Export.ImageLayerName"));
+        }
+        else
+        {
+            int w = Math.Max(1, (int)Viewport.ActualWidth);
+            int h = Math.Max(1, (int)Viewport.ActualHeight);
+            outcome = _workspace.ExportViewportAsPsd(
+                dialog.FolderName,
+                inkLayerName,
+                Localizer.Get("Export.BackgroundLayerName"),
+                w, h,
+                _viewport.WorldToViewportMatrix);
+        }
 
         StatusText.Text = outcome.Failed == 0
             ? Localizer.Format("Export.Success", outcome.Success)

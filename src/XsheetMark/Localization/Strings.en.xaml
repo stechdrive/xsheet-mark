@@ -15,7 +15,8 @@
     <s:String x:Key="Tooltip.WidthMedium">Medium</s:String>
     <s:String x:Key="Tooltip.WidthThick">Thick</s:String>
     <s:String x:Key="Tooltip.FitAll">Fit all</s:String>
-    <s:String x:Key="Tooltip.ExportPsd">Export as PSD</s:String>
+    <s:String x:Key="Tooltip.ExportPsd">Export as PSD (per image)</s:String>
+    <s:String x:Key="Tooltip.CapturePsd">Capture viewport as PSD</s:String>
     <s:String x:Key="Tooltip.Reset">Clear canvas (undoable)</s:String>
     <s:String x:Key="Tooltip.Minimize">Minimize</s:String>
     <s:String x:Key="Tooltip.Close">Close</s:String>
@@ -43,8 +44,9 @@
 
     <s:String x:Key="Export.InkLayerName">xsheet-mark</s:String>
     <s:String x:Key="Export.ImageLayerName">image</s:String>
+    <s:String x:Key="Export.BackgroundLayerName">background</s:String>
     <s:String x:Key="Export.FolderDialogTitle">Choose output folder for PSD export</s:String>
     <s:String x:Key="Export.Success">Exported {0} PSD file(s)</s:String>
     <s:String x:Key="Export.PartialSuccess">Exported {0} PSD file(s), {1} failed</s:String>
-    <s:String x:Key="Export.NoImages">No images to export</s:String>
+    <s:String x:Key="Export.NoContent">Nothing to export</s:String>
 </ResourceDictionary>

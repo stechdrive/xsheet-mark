@@ -321,8 +321,22 @@ public static class PsdIO
             scaled = source;
         }
 
+        // JPEG doesn't carry alpha. Composite over white before encoding so
+        // transparent areas (from Capture mode exports) render as clean white
+        // in file-browser previews, not the premultiplied-black mush you get
+        // when the encoder sees alpha=0 pixels.
+        var whiteBacked = new RenderTargetBitmap(w, h, 96, 96, PixelFormats.Pbgra32);
+        var bgVisual = new DrawingVisual();
+        using (var dc = bgVisual.RenderOpen())
+        {
+            dc.DrawRectangle(System.Windows.Media.Brushes.White, null, new System.Windows.Rect(0, 0, w, h));
+            dc.DrawImage(scaled, new System.Windows.Rect(0, 0, w, h));
+        }
+        whiteBacked.Render(bgVisual);
+        whiteBacked.Freeze();
+
         var encoder = new JpegBitmapEncoder { QualityLevel = 92 };
-        encoder.Frames.Add(BitmapFrame.Create(scaled));
+        encoder.Frames.Add(BitmapFrame.Create(whiteBacked));
         byte[] jpegBytes;
         using (var jpegMs = new MemoryStream())
         {

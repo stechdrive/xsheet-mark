@@ -15,7 +15,8 @@
     <s:String x:Key="Tooltip.WidthMedium">中</s:String>
     <s:String x:Key="Tooltip.WidthThick">太</s:String>
     <s:String x:Key="Tooltip.FitAll">全体表示</s:String>
-    <s:String x:Key="Tooltip.ExportPsd">PSD で書き出し</s:String>
+    <s:String x:Key="Tooltip.ExportPsd">PSD で書き出し（画像ごと）</s:String>
+    <s:String x:Key="Tooltip.CapturePsd">ビューポートを PSD でキャプチャ</s:String>
     <s:String x:Key="Tooltip.Reset">キャンバスをクリア（取り消し可）</s:String>
     <s:String x:Key="Tooltip.Minimize">最小化</s:String>
     <s:String x:Key="Tooltip.Close">閉じる</s:String>
@@ -43,8 +44,9 @@
 
     <s:String x:Key="Export.InkLayerName">xsheet-mark</s:String>
     <s:String x:Key="Export.ImageLayerName">画像</s:String>
+    <s:String x:Key="Export.BackgroundLayerName">背景</s:String>
     <s:String x:Key="Export.FolderDialogTitle">PSD 書き出し先のフォルダを選択</s:String>
     <s:String x:Key="Export.Success">{0} 件の PSD を書き出しました</s:String>
     <s:String x:Key="Export.PartialSuccess">{0} 件書き出し、{1} 件失敗</s:String>
-    <s:String x:Key="Export.NoImages">書き出す画像がありません</s:String>
+    <s:String x:Key="Export.NoContent">書き出す内容がありません</s:String>
 </ResourceDictionary>

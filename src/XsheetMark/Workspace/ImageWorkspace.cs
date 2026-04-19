@@ -44,6 +44,7 @@ public class ImageWorkspace
 
     public bool IsMoving => _draggingImage != null;
     public bool HasImages => _imageLayer.Children.Count > 0;
+    public bool HasStrokes => _inkCanvas.Strokes.Count > 0;
 
     public ImageWorkspace(Canvas imageLayer, InkCanvas inkCanvas, UndoStack? undoStack = null)
     {
@@ -228,6 +229,89 @@ public class ImageWorkspace
             var m = new Matrix(1, 0, 0, 1, dx, dy);
             foreach (var s in strokes) s.Transform(m, applyToStylusTip: false);
         }
+    }
+
+    /// <summary>
+    /// Exports a PSD containing a white background + the ink strokes currently
+    /// visible in the viewport, at the given viewport pixel size. Used when
+    /// the canvas has no images and the user still wants to save their notes.
+    /// Strokes are rendered using the world-to-viewport transform so what
+    /// lands in the PSD matches what the user sees on screen.
+    /// </summary>
+    /// <summary>
+    /// Exports the current viewport view as a single PSD at viewport pixel
+    /// dimensions. White background, any loaded images rendered at their
+    /// transformed positions (respecting the image-layer opacity), ink
+    /// strokes on top. Used both as the fallback when the canvas has no
+    /// images and for the explicit "capture viewport" action (📷).
+    /// </summary>
+    public ExportOutcome ExportViewportAsPsd(
+        string outputFolder,
+        string inkLayerName,
+        string backgroundLayerName,
+        int width,
+        int height,
+        Matrix worldToViewport)
+    {
+        if (width <= 0 || height <= 0) return new ExportOutcome(0, 1);
+
+        try
+        {
+            var outputPath = Path.Combine(outputFolder, "canvas-marked.psd");
+            for (int suffix = 2; File.Exists(outputPath); suffix++)
+            {
+                outputPath = Path.Combine(outputFolder, $"canvas-marked-{suffix}.psd");
+            }
+
+            // Background is transparent — only images contribute to the
+            // "background" layer. Anywhere else stays alpha=0 so the PSD can
+            // be composited over other content.
+            byte[] backgroundBgra = Rasterize(width, height, dc =>
+                DrawImagesOnto(dc, worldToViewport));
+
+            byte[] inkBgra = Rasterize(width, height, dc =>
+            {
+                dc.PushTransform(new MatrixTransform(worldToViewport));
+                foreach (var s in _inkCanvas.Strokes) s.Draw(dc);
+            });
+
+            byte[] compositeBgra = Rasterize(width, height, dc =>
+            {
+                DrawImagesOnto(dc, worldToViewport);
+                dc.PushTransform(new MatrixTransform(worldToViewport));
+                foreach (var s in _inkCanvas.Strokes) s.Draw(dc);
+            });
+
+            bool ok = PsdIO.TryExportNewPsd(
+                backgroundBgra, compositeBgra, inkBgra,
+                width, height,
+                backgroundLayerName, inkLayerName,
+                outputPath);
+            return new ExportOutcome(ok ? 1 : 0, ok ? 0 : 1);
+        }
+        catch
+        {
+            return new ExportOutcome(0, 1);
+        }
+    }
+
+    private void DrawImagesOnto(DrawingContext dc, Matrix worldToViewport)
+    {
+        if (_imageLayer.Children.Count == 0) return;
+
+        double opacity = _imageLayer.Opacity;
+        bool opacityApplied = opacity < 1.0;
+        if (opacityApplied) dc.PushOpacity(opacity);
+        dc.PushTransform(new MatrixTransform(worldToViewport));
+        foreach (UIElement el in _imageLayer.Children)
+        {
+            if (el is not Image img || img.Source is null) continue;
+            double left = GetLeftOrZero(img);
+            double top = GetTopOrZero(img);
+            dc.DrawImage(img.Source, new Rect(left, top, img.Width, img.Height));
+        }
+        dc.Pop(); // transform
+        if (opacityApplied) dc.Pop(); // opacity
     }
 
     /// <summary>

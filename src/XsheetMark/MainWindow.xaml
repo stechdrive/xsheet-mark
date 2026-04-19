@@ -327,6 +327,12 @@
                             FontSize="16"
                             Click="ExportPsd_Click"
                             ToolTip="{DynamicResource Tooltip.ExportPsd}"/>
+                    <Button Style="{StaticResource ChromeButton}"
+                            Content="📷"
+                            Width="40" Height="40"
+                            FontSize="16"
+                            Click="CapturePsd_Click"
+                            ToolTip="{DynamicResource Tooltip.CapturePsd}"/>
 
                     <Rectangle Height="1" Margin="4,6" Fill="#40FFFFFF"/>
 
