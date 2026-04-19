@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.IO;
 using System.Text;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -13,11 +14,12 @@ namespace XsheetMark.Psd;
 /// so swapping the library out later stays local to this file.
 ///
 /// - TryLoadComposite reads the composite from 8-bit RGB / RGBA PSD.
-/// - TryExportWithInkLayer re-reads a source PSD and appends an ink layer
-///   on top (preserves original layer structure).
-/// - TryExportNewPsd writes a new PSD from scratch with an image layer,
-///   an ink layer on top, and a flat composite so Photoshop-agnostic
-///   preview tools render the intended look.
+/// - TryExportWithInkLayer re-reads a source PSD, appends an ink layer on
+///   top (preserves original layer structure), and replaces the embedded
+///   thumbnail so file-browser previews reflect the annotations.
+/// - TryExportNewPsd writes a new PSD from scratch with an image layer, an
+///   ink layer on top, a flat composite for preview tools, and a matching
+///   thumbnail.
 ///
 /// All byte buffers passed in for export must be premultiplied BGRA
 /// (matches WPF RenderTargetBitmap with PixelFormats.Pbgra32).
@@ -40,6 +42,7 @@ public static class PsdIO
     public static bool TryExportWithInkLayer(
         string sourcePsdPath,
         byte[] inkBgraPremultiplied,
+        byte[]? compositeBgraForThumbnail,
         int width,
         int height,
         string layerName,
@@ -49,6 +52,10 @@ public static class PsdIO
         {
             var psd = new PsdFile(sourcePsdPath, new LoadContext());
             AppendBgraLayer(psd, inkBgraPremultiplied, width, height, layerName);
+            if (compositeBgraForThumbnail is not null)
+            {
+                UpdateThumbnailFromBgra(psd, compositeBgraForThumbnail, width, height);
+            }
             psd.Save(outputPath, Encoding.Default);
             return true;
         }
@@ -77,16 +84,12 @@ public static class PsdIO
                 BitDepth = 8,
                 ColumnCount = width,
                 RowCount = height,
-                // PsdFile.SaveImage writes this top-level compression mode
-                // ONCE for the composite. Without this, it would default to
-                // Raw while the channels below are RLE-compressed, which
-                // produces a corrupt file ("unexpected end of file" in
-                // Photoshop).
                 ImageCompression = ImageCompression.Rle,
             };
             SetBaseLayerFromBgra(psd, compositeBgraPremultiplied, width, height);
             AppendBgraLayer(psd, imageBgraPremultiplied, width, height, imageLayerName);
             AppendBgraLayer(psd, inkBgraPremultiplied, width, height, inkLayerName);
+            UpdateThumbnailFromBgra(psd, compositeBgraPremultiplied, width, height);
             psd.Save(outputPath, Encoding.Default);
             return true;
         }
@@ -138,11 +141,6 @@ public static class PsdIO
         return bitmap;
     }
 
-    /// <summary>
-    /// BaseLayer stores the flat composite preview. Photoshop uses this as
-    /// the quick-open thumbnail and non-Photoshop viewers often show only
-    /// this bitmap. Channel IDs for BaseLayer are 0 (R), 1 (G), 2 (B), 3 (A).
-    /// </summary>
     private static void SetBaseLayerFromBgra(PsdFile psd, byte[] bgraPremult, int width, int height)
     {
         psd.BaseLayer.Rect = new Rectangle(0, 0, width, height);
@@ -160,11 +158,6 @@ public static class PsdIO
         AddChannel(psd.BaseLayer, 3, a);
     }
 
-    /// <summary>
-    /// Adds an editable layer. Regular layers use channel IDs -1 (A), 0 (R),
-    /// 1 (G), 2 (B) — note the alpha-at-minus-one convention, which differs
-    /// from BaseLayer.
-    /// </summary>
     private static void AppendBgraLayer(
         PsdFile psd, byte[] bgraPremult, int width, int height, string layerName)
     {
@@ -230,5 +223,72 @@ public static class PsdIO
                 b[i] = (byte)Math.Min(255, (pb * 255 + pa / 2) / pa);
             }
         }
+    }
+
+    /// <summary>
+    /// Replace the PSD's embedded thumbnail (Image Resource 1036/1033) with a
+    /// fresh one rendered from the composite BGRA buffer. Without this, file-
+    /// browser previews continue showing the thumbnail baked into the source
+    /// PSD when it was originally saved.
+    /// </summary>
+    private static void UpdateThumbnailFromBgra(PsdFile psd, byte[] bgraPremult, int width, int height)
+    {
+        var fullSource = BitmapSource.Create(
+            width, height, 96, 96, PixelFormats.Pbgra32,
+            palette: null, bgraPremult, width * 4);
+        fullSource.Freeze();
+
+        psd.ImageResources.RemoveAll(r =>
+            r.ID == ResourceID.ThumbnailRgb || r.ID == ResourceID.ThumbnailBgr);
+
+        byte[] data = BuildThumbnailResourceData(fullSource);
+        using var ms = new MemoryStream(data);
+        var reader = new PsdBinaryReader(ms, Encoding.Default);
+        var resource = new RawImageResource(reader, "8BIM", ResourceID.ThumbnailRgb, string.Empty, data.Length);
+        psd.ImageResources.Add(resource);
+    }
+
+    private static byte[] BuildThumbnailResourceData(BitmapSource source)
+    {
+        const int maxDim = 128;
+        int srcW = source.PixelWidth;
+        int srcH = source.PixelHeight;
+        double scale = Math.Min(1.0, Math.Min((double)maxDim / srcW, (double)maxDim / srcH));
+        int w = Math.Max(1, (int)Math.Round(srcW * scale));
+        int h = Math.Max(1, (int)Math.Round(srcH * scale));
+
+        var rtb = new RenderTargetBitmap(w, h, 96, 96, PixelFormats.Pbgra32);
+        var visual = new DrawingVisual();
+        using (var dc = visual.RenderOpen())
+        {
+            dc.DrawImage(source, new System.Windows.Rect(0, 0, w, h));
+        }
+        rtb.Render(visual);
+
+        var encoder = new JpegBitmapEncoder { QualityLevel = 85 };
+        encoder.Frames.Add(BitmapFrame.Create(rtb));
+        byte[] jpegBytes;
+        using (var jpegMs = new MemoryStream())
+        {
+            encoder.Save(jpegMs);
+            jpegBytes = jpegMs.ToArray();
+        }
+
+        // PSD thumbnail resource format: 28-byte header + JPEG payload.
+        using var headerMs = new MemoryStream();
+        using (var writer = new PsdBinaryWriter(headerMs, Encoding.Default))
+        {
+            writer.Write((uint)1);                          // format = JPEG
+            writer.Write((uint)w);
+            writer.Write((uint)h);
+            uint widthBytes = (uint)((w * 24 + 31) / 32 * 4);
+            writer.Write(widthBytes);
+            writer.Write(widthBytes * (uint)h);
+            writer.Write((uint)jpegBytes.Length);
+            writer.Write((ushort)24);
+            writer.Write((ushort)1);
+            writer.Write(jpegBytes);
+        }
+        return headerMs.ToArray();
     }
 }

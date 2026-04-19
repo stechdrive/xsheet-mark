@@ -227,21 +227,24 @@ public class ImageWorkspace
                 DrawIntersectingStrokes(dc, imgRect);
             });
 
+            byte[] compositeBgra = Rasterize(w, h, dc =>
+            {
+                dc.DrawImage(img.Source, new Rect(0, 0, w, h));
+                dc.PushTransform(new TranslateTransform(-left, -top));
+                DrawIntersectingStrokes(dc, imgRect);
+            });
+
             bool ok;
             if (origin is not null && origin.IsPsd)
             {
-                ok = PsdIO.TryExportWithInkLayer(origin.SourcePath, inkBgra, w, h, inkLayerName, outputPath);
+                ok = PsdIO.TryExportWithInkLayer(
+                    origin.SourcePath, inkBgra, compositeBgra,
+                    w, h, inkLayerName, outputPath);
             }
             else
             {
                 byte[] imageBgra = Rasterize(w, h, dc =>
                     dc.DrawImage(img.Source, new Rect(0, 0, w, h)));
-                byte[] compositeBgra = Rasterize(w, h, dc =>
-                {
-                    dc.DrawImage(img.Source, new Rect(0, 0, w, h));
-                    dc.PushTransform(new TranslateTransform(-left, -top));
-                    DrawIntersectingStrokes(dc, imgRect);
-                });
                 ok = PsdIO.TryExportNewPsd(
                     imageBgra, compositeBgra, inkBgra,
                     w, h, imageLayerName, inkLayerName, outputPath);

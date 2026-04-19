@@ -14,7 +14,13 @@
     <s:String x:Key="Tooltip.WidthThick">太</s:String>
     <s:String x:Key="Tooltip.FitAll">全体表示</s:String>
     <s:String x:Key="Tooltip.ExportPsd">PSD で書き出し</s:String>
+    <s:String x:Key="Tooltip.Minimize">最小化</s:String>
     <s:String x:Key="Tooltip.Close">閉じる</s:String>
+    <s:String x:Key="Tooltip.WindowOpacity">ウィンドウの不透明度</s:String>
+    <s:String x:Key="Tooltip.ImageOpacity">画像の不透明度</s:String>
+    <s:String x:Key="Slider.OpacityPrefix">不透明度：</s:String>
+    <s:String x:Key="Slider.Window">ウィンドウ</s:String>
+    <s:String x:Key="Slider.Image">画像</s:String>
 
     <s:String x:Key="Status.Initial">画像をドロップ  ·  ホイール = ズーム  ·  中/右ドラッグ = パン</s:String>
     <s:String x:Key="Status.Zoom">ズーム: {0:F0}%</s:String>

@@ -41,6 +41,17 @@ public partial class MainWindow : Window
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
 
+    private void Minimize_Click(object sender, RoutedEventArgs e) =>
+        WindowState = WindowState.Minimized;
+
+    private void WindowOpacity_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) =>
+        Opacity = e.NewValue;
+
+    private void ImageOpacity_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (ImageLayer is not null) ImageLayer.Opacity = e.NewValue;
+    }
+
     private void Viewport_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
         var cursor = e.GetPosition(Viewport);

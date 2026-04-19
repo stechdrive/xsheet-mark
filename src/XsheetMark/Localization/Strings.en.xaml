@@ -14,7 +14,13 @@
     <s:String x:Key="Tooltip.WidthThick">Thick</s:String>
     <s:String x:Key="Tooltip.FitAll">Fit all</s:String>
     <s:String x:Key="Tooltip.ExportPsd">Export as PSD</s:String>
+    <s:String x:Key="Tooltip.Minimize">Minimize</s:String>
     <s:String x:Key="Tooltip.Close">Close</s:String>
+    <s:String x:Key="Tooltip.WindowOpacity">Window opacity</s:String>
+    <s:String x:Key="Tooltip.ImageOpacity">Image opacity</s:String>
+    <s:String x:Key="Slider.OpacityPrefix">Opacity:</s:String>
+    <s:String x:Key="Slider.Window">Window</s:String>
+    <s:String x:Key="Slider.Image">Image</s:String>
 
     <s:String x:Key="Status.Initial">Drop images  ·  wheel = zoom  ·  mid/right drag = pan</s:String>
     <s:String x:Key="Status.Zoom">Zoom: {0:F0}%</s:String>
