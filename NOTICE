@@ -1,0 +1,21 @@
+xsheet-mark
+
+Copyright (c) 2026 stechdrive
+
+Licensed under the MIT License (see LICENSE).
+
+--------------------------------------------------------------------------------
+This product includes the following third-party components:
+
+1. PsdFile
+   Vendored at: src/XsheetMark/Vendor/PsdFile/
+   Copyright (c) 2006-2007 Frank Blumenberg
+   Copyright (c) 2010-2020 Tao Yue
+   License: MIT (full text at src/XsheetMark/Vendor/PsdFile/LICENSE.txt)
+   Source: https://github.com/PsdPlugin/PsdPlugin
+
+2. Pfim
+   Consumed as a NuGet package reference.
+   Copyright (c) Nick Babcock
+   License: MIT
+   Source: https://github.com/nickbabcock/Pfim
