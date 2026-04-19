@@ -1,39 +1,18 @@
 using System;
 using System.Globalization;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Input;
-using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using XsheetMark.Interop;
+using XsheetMark.Viewport;
 
 namespace XsheetMark;
 
 public partial class MainWindow : Window
 {
-    private const int GWL_EXSTYLE = -20;
-    private const int WS_EX_NOACTIVATE = 0x08000000;
-    private const int WM_MOUSEACTIVATE = 0x0021;
-    private const int MA_NOACTIVATE = 0x0003;
-    private const int WM_NCLBUTTONDOWN = 0x00A1;
-    private const int WM_NCHITTEST = 0x0084;
-    private const int HTCAPTION = 2;
-    private const int HTLEFT = 10;
-    private const int HTRIGHT = 11;
-    private const int HTTOP = 12;
-    private const int HTTOPLEFT = 13;
-    private const int HTTOPRIGHT = 14;
-    private const int HTBOTTOM = 15;
-    private const int HTBOTTOMLEFT = 16;
-    private const int HTBOTTOMRIGHT = 17;
-
-    private const int ResizeGripThickness = 8;
-
-    private const double MinScale = 0.02;
-    private const double MaxScale = 16.0;
     private const double ImageGap = 50;
 
     private enum Tool { Pen, Eraser, Move }
@@ -41,181 +20,72 @@ public partial class MainWindow : Window
     private static readonly string[] SupportedExtensions =
         { ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".tif" };
 
-    [StructLayout(LayoutKind.Sequential)]
-    private struct RECT { public int Left, Top, Right, Bottom; }
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex);
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
-
-    [DllImport("user32.dll")]
-    private static extern IntPtr SendMessage(IntPtr hWnd, int Msg, IntPtr wParam, IntPtr lParam);
-
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool ReleaseCapture();
-
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+    private readonly CanvasViewport _viewport;
 
     private int _strokeCount;
     private Tool _currentTool = Tool.Pen;
 
-    private bool _panning;
-    private Point _panStartScreen;
-    private double _panStartTranslateX, _panStartTranslateY;
-
     private Image? _draggingImage;
     private Point _dragStartCursorWorld;
-    private double _dragStartImageLeft, _dragStartImageTop;
+    private double _dragStartImageLeft;
+    private double _dragStartImageTop;
 
     public MainWindow()
     {
         InitializeComponent();
+
+        _viewport = new CanvasViewport(Viewport, WorldScale, WorldTranslate);
+        WindowChromeInterop.Attach(this);
+
         Ink.StrokeCollected += OnStrokeCollected;
         Ink.DefaultDrawingAttributes.Color = Color.FromRgb(0x20, 0x20, 0x20);
         Ink.DefaultDrawingAttributes.Width = 2;
         Ink.DefaultDrawingAttributes.Height = 2;
     }
 
-    protected override void OnSourceInitialized(EventArgs e)
-    {
-        base.OnSourceInitialized(e);
-
-        var hwnd = new WindowInteropHelper(this).Handle;
-
-        var exStyle = GetWindowLongPtr(hwnd, GWL_EXSTYLE).ToInt64();
-        SetWindowLongPtr(hwnd, GWL_EXSTYLE, new IntPtr(exStyle | WS_EX_NOACTIVATE));
-
-        HwndSource.FromHwnd(hwnd)?.AddHook(WndProc);
-    }
-
-    private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
-    {
-        if (msg == WM_MOUSEACTIVATE)
-        {
-            handled = true;
-            return (IntPtr)MA_NOACTIVATE;
-        }
-
-        if (msg == WM_NCHITTEST)
-        {
-            var hit = HitTestEdges(hwnd, lParam);
-            if (hit != 0)
-            {
-                handled = true;
-                return (IntPtr)hit;
-            }
-        }
-
-        return IntPtr.Zero;
-    }
-
-    private static int HitTestEdges(IntPtr hwnd, IntPtr lParam)
-    {
-        if (!GetWindowRect(hwnd, out var r)) return 0;
-
-        var lp = unchecked((int)lParam.ToInt64());
-        int sx = (short)(lp & 0xFFFF);
-        int sy = (short)((lp >> 16) & 0xFFFF);
-
-        int wx = sx - r.Left;
-        int wy = sy - r.Top;
-        int width = r.Right - r.Left;
-        int height = r.Bottom - r.Top;
-
-        bool onLeft = wx >= 0 && wx < ResizeGripThickness;
-        bool onRight = wx >= width - ResizeGripThickness && wx < width;
-        bool onTop = wy >= 0 && wy < ResizeGripThickness;
-        bool onBottom = wy >= height - ResizeGripThickness && wy < height;
-
-        if (onTop && onLeft) return HTTOPLEFT;
-        if (onTop && onRight) return HTTOPRIGHT;
-        if (onBottom && onLeft) return HTBOTTOMLEFT;
-        if (onBottom && onRight) return HTBOTTOMRIGHT;
-        if (onLeft) return HTLEFT;
-        if (onRight) return HTRIGHT;
-        if (onTop) return HTTOP;
-        if (onBottom) return HTBOTTOM;
-
-        return 0;
-    }
-
-    private void DragBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        ReleaseCapture();
-        SendMessage(new WindowInteropHelper(this).Handle, WM_NCLBUTTONDOWN, (IntPtr)HTCAPTION, IntPtr.Zero);
-    }
+    private void DragBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) =>
+        WindowChromeInterop.BeginTitleBarDrag(this);
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
-
-    private Point ScreenToWorld(Point screen) =>
-        new((screen.X - WorldTranslate.X) / WorldScale.ScaleX,
-            (screen.Y - WorldTranslate.Y) / WorldScale.ScaleY);
 
     private void Viewport_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
         var cursor = e.GetPosition(Viewport);
         var factor = Math.Pow(1.1, e.Delta / 120.0);
-        ZoomAt(cursor, factor);
+        _viewport.ZoomAt(cursor, factor);
+        StatusText.Text = $"Zoom: {_viewport.Scale * 100:F0}%";
         e.Handled = true;
-    }
-
-    private void ZoomAt(Point screenPoint, double factor)
-    {
-        var worldBefore = ScreenToWorld(screenPoint);
-        var newScale = Math.Clamp(WorldScale.ScaleX * factor, MinScale, MaxScale);
-        if (newScale == WorldScale.ScaleX) return;
-
-        WorldScale.ScaleX = newScale;
-        WorldScale.ScaleY = newScale;
-
-        var worldAfter = ScreenToWorld(screenPoint);
-        WorldTranslate.X += (worldAfter.X - worldBefore.X) * newScale;
-        WorldTranslate.Y += (worldAfter.Y - worldBefore.Y) * newScale;
-
-        StatusText.Text = $"Zoom: {newScale * 100:F0}%";
     }
 
     private void Viewport_PreviewMouseDown(object sender, MouseButtonEventArgs e)
     {
         if (e.ChangedButton is MouseButton.Middle or MouseButton.Right)
         {
-            _panning = true;
-            _panStartScreen = e.GetPosition(Viewport);
-            _panStartTranslateX = WorldTranslate.X;
-            _panStartTranslateY = WorldTranslate.Y;
+            _viewport.BeginPan(e.GetPosition(Viewport));
             Viewport.CaptureMouse();
             e.Handled = true;
             return;
         }
 
-        if (_currentTool == Tool.Move && e.ChangedButton == MouseButton.Left)
+        if (_currentTool == Tool.Move && e.ChangedButton == MouseButton.Left
+            && e.OriginalSource is Image img && ImageLayer.Children.Contains(img))
         {
-            if (e.OriginalSource is Image img && ImageLayer.Children.Contains(img))
-            {
-                _draggingImage = img;
-                _dragStartCursorWorld = e.GetPosition(ImageLayer);
-                _dragStartImageLeft = Canvas.GetLeft(img);
-                if (double.IsNaN(_dragStartImageLeft)) _dragStartImageLeft = 0;
-                _dragStartImageTop = Canvas.GetTop(img);
-                if (double.IsNaN(_dragStartImageTop)) _dragStartImageTop = 0;
-                Viewport.CaptureMouse();
-                e.Handled = true;
-            }
+            _draggingImage = img;
+            _dragStartCursorWorld = e.GetPosition(ImageLayer);
+            _dragStartImageLeft = Canvas.GetLeft(img);
+            if (double.IsNaN(_dragStartImageLeft)) _dragStartImageLeft = 0;
+            _dragStartImageTop = Canvas.GetTop(img);
+            if (double.IsNaN(_dragStartImageTop)) _dragStartImageTop = 0;
+            Viewport.CaptureMouse();
+            e.Handled = true;
         }
     }
 
     private void Viewport_MouseMove(object sender, MouseEventArgs e)
     {
-        if (_panning)
+        if (_viewport.IsPanning)
         {
-            var current = e.GetPosition(Viewport);
-            WorldTranslate.X = _panStartTranslateX + (current.X - _panStartScreen.X);
-            WorldTranslate.Y = _panStartTranslateY + (current.Y - _panStartScreen.Y);
+            _viewport.UpdatePan(e.GetPosition(Viewport));
             return;
         }
 
@@ -231,9 +101,9 @@ public partial class MainWindow : Window
 
     private void Viewport_PreviewMouseUp(object sender, MouseButtonEventArgs e)
     {
-        if (_panning && e.ChangedButton is MouseButton.Middle or MouseButton.Right)
+        if (_viewport.IsPanning && e.ChangedButton is MouseButton.Middle or MouseButton.Right)
         {
-            _panning = false;
+            _viewport.EndPan();
             Viewport.ReleaseMouseCapture();
             e.Handled = true;
             return;
@@ -312,7 +182,7 @@ public partial class MainWindow : Window
             var rect = new Rect(left, top, img.Width, img.Height);
             bounds = bounds.HasValue ? Rect.Union(bounds.Value, rect) : rect;
         }
-        if (bounds.HasValue) FitToBounds(bounds.Value);
+        if (bounds.HasValue) _viewport.FitToBounds(bounds.Value);
     }
 
     private void OnDragOver(object sender, DragEventArgs e)
@@ -353,11 +223,11 @@ public partial class MainWindow : Window
 
         if (wasEmpty && unionBounds.HasValue)
         {
-            FitToBounds(unionBounds.Value);
+            _viewport.FitToBounds(unionBounds.Value);
         }
 
         var fitSuffix = wasEmpty && loaded > 0
-            ? $"   fit at {WorldScale.ScaleX * 100:F0}%"
+            ? $"   fit at {_viewport.Scale * 100:F0}%"
             : "";
         StatusText.Text = loaded switch
         {
@@ -423,27 +293,6 @@ public partial class MainWindow : Window
         return maxRight;
     }
 
-    private void FitToBounds(Rect bounds)
-    {
-        if (Viewport.ActualWidth <= 0 || Viewport.ActualHeight <= 0) return;
-        if (bounds.Width <= 0 || bounds.Height <= 0) return;
-
-        const double padding = 20;
-        double scaleX = (Viewport.ActualWidth - padding * 2) / bounds.Width;
-        double scaleY = (Viewport.ActualHeight - padding * 2) / bounds.Height;
-        double scale = Math.Min(scaleX, scaleY);
-        scale = Math.Min(scale, 1.0);
-        scale = Math.Clamp(scale, MinScale, MaxScale);
-
-        WorldScale.ScaleX = scale;
-        WorldScale.ScaleY = scale;
-
-        double centerX = bounds.X + bounds.Width / 2;
-        double centerY = bounds.Y + bounds.Height / 2;
-        WorldTranslate.X = Viewport.ActualWidth / 2 - centerX * scale;
-        WorldTranslate.Y = Viewport.ActualHeight / 2 - centerY * scale;
-    }
-
     private void OnStrokeCollected(object sender, InkCanvasStrokeCollectedEventArgs e)
     {
         _strokeCount++;
@@ -458,6 +307,6 @@ public partial class MainWindow : Window
 
         var flat = Math.Abs(maxP - minP) < 0.001f;
         StatusText.Text =
-            $"Strokes: {_strokeCount}   pressure: {minP:F2}–{maxP:F2} {(flat ? "(flat)" : "(varies)")}   zoom: {WorldScale.ScaleX * 100:F0}%";
+            $"Strokes: {_strokeCount}   pressure: {minP:F2}–{maxP:F2} {(flat ? "(flat)" : "(varies)")}   zoom: {_viewport.Scale * 100:F0}%";
     }
 }
