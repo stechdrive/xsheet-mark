@@ -42,7 +42,7 @@ public static class PsdIO
     public static bool TryExportWithInkLayer(
         string sourcePsdPath,
         byte[] inkBgraPremultiplied,
-        byte[]? compositeBgraForThumbnail,
+        byte[]? compositeBgraPremultiplied,
         int width,
         int height,
         string layerName,
@@ -52,9 +52,14 @@ public static class PsdIO
         {
             var psd = new PsdFile(sourcePsdPath, new LoadContext());
             AppendBgraLayer(psd, inkBgraPremultiplied, width, height, layerName);
-            if (compositeBgraForThumbnail is not null)
+            if (compositeBgraPremultiplied is not null)
             {
-                UpdateThumbnailFromBgra(psd, compositeBgraForThumbnail, width, height);
+                // Replace the "Image Data Section" (Photoshop's Maximize
+                // Compatibility payload) with the annotated composite so
+                // non-Photoshop viewers and thumbnail generators that bypass
+                // the layer stack see the marked-up image, not the original.
+                ReplaceBaseLayerFromBgra(psd, compositeBgraPremultiplied, width, height);
+                UpdateThumbnailFromBgra(psd, compositeBgraPremultiplied, width, height);
             }
             psd.Save(outputPath, Encoding.Default);
             return true;
@@ -158,6 +163,31 @@ public static class PsdIO
         AddChannel(psd.BaseLayer, 3, a);
     }
 
+    /// <summary>
+    /// Replaces a loaded PSD's existing BaseLayer channels with the given
+    /// composite BGRA. Used when re-saving a PSD to keep its "Image Data
+    /// Section" (the flattened preview that non-Photoshop tools read) in
+    /// sync with the new layer content.
+    /// </summary>
+    private static void ReplaceBaseLayerFromBgra(PsdFile psd, byte[] bgraPremult, int width, int height)
+    {
+        psd.ChannelCount = 4;
+        psd.BaseLayer.Rect = new Rectangle(0, 0, width, height);
+        psd.BaseLayer.Channels.Clear();
+
+        int pixels = width * height;
+        byte[] r = new byte[pixels];
+        byte[] g = new byte[pixels];
+        byte[] b = new byte[pixels];
+        byte[] a = new byte[pixels];
+        UnpremultiplyBgra(bgraPremult, pixels, r, g, b, a);
+
+        AddChannel(psd.BaseLayer, 0, r);
+        AddChannel(psd.BaseLayer, 1, g);
+        AddChannel(psd.BaseLayer, 2, b);
+        AddChannel(psd.BaseLayer, 3, a);
+    }
+
     private static void AppendBgraLayer(
         PsdFile psd, byte[] bgraPremult, int width, int height, string layerName)
     {
@@ -238,35 +268,61 @@ public static class PsdIO
             palette: null, bgraPremult, width * 4);
         fullSource.Freeze();
 
+        // Respect the source PSD's original thumbnail dimensions — Photoshop
+        // saves different sizes depending on its preferences (often 256 but
+        // sometimes 400+), and shrinking to an arbitrary 256 makes Explorer
+        // upscale and blur the result. Fall back to 256 when there's no
+        // embedded thumbnail (new PSD, or source that lacked one).
+        int targetMaxDim = 256;
+        foreach (var res in psd.ImageResources)
+        {
+            if (res is Thumbnail t && t.Image is not null)
+            {
+                int originalMax = Math.Max(t.Image.Width, t.Image.Height);
+                if (originalMax > 0) targetMaxDim = originalMax;
+                break;
+            }
+        }
+
         psd.ImageResources.RemoveAll(r =>
             r.ID == ResourceID.ThumbnailRgb || r.ID == ResourceID.ThumbnailBgr);
 
-        byte[] data = BuildThumbnailResourceData(fullSource);
+        byte[] data = BuildThumbnailResourceData(fullSource, targetMaxDim);
         using var ms = new MemoryStream(data);
         var reader = new PsdBinaryReader(ms, Encoding.Default);
         var resource = new RawImageResource(reader, "8BIM", ResourceID.ThumbnailRgb, string.Empty, data.Length);
         psd.ImageResources.Add(resource);
     }
 
-    private static byte[] BuildThumbnailResourceData(BitmapSource source)
+    private static byte[] BuildThumbnailResourceData(BitmapSource source, int maxDim)
     {
-        const int maxDim = 128;
         int srcW = source.PixelWidth;
         int srcH = source.PixelHeight;
         double scale = Math.Min(1.0, Math.Min((double)maxDim / srcW, (double)maxDim / srcH));
         int w = Math.Max(1, (int)Math.Round(srcW * scale));
         int h = Math.Max(1, (int)Math.Round(srcH * scale));
 
-        var rtb = new RenderTargetBitmap(w, h, 96, 96, PixelFormats.Pbgra32);
-        var visual = new DrawingVisual();
-        using (var dc = visual.RenderOpen())
+        // TransformedBitmap uses Fant resampling, a much better downsample
+        // than RenderTargetBitmap's default bilinear — critical for shrinking
+        // an A3/150dpi image (13×) without aliasing the annotation linework.
+        BitmapSource scaled;
+        if (scale < 1.0)
         {
-            dc.DrawImage(source, new System.Windows.Rect(0, 0, w, h));
+            var tb = new TransformedBitmap();
+            tb.BeginInit();
+            tb.Source = source;
+            tb.Transform = new ScaleTransform(scale, scale);
+            tb.EndInit();
+            tb.Freeze();
+            scaled = tb;
         }
-        rtb.Render(visual);
+        else
+        {
+            scaled = source;
+        }
 
-        var encoder = new JpegBitmapEncoder { QualityLevel = 85 };
-        encoder.Frames.Add(BitmapFrame.Create(rtb));
+        var encoder = new JpegBitmapEncoder { QualityLevel = 92 };
+        encoder.Frames.Add(BitmapFrame.Create(scaled));
         byte[] jpegBytes;
         using (var jpegMs = new MemoryStream())
         {
