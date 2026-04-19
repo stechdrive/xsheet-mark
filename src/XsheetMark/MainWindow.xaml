@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:XsheetMark"
         mc:Ignorable="d"
         Title="xsheet-mark"
+        Icon="/icon.ico"
         Height="600" Width="1000"
         MinHeight="240" MinWidth="360"
         Topmost="True"

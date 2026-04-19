@@ -14,10 +14,16 @@
 
     <!-- Required by vendored PsdFile (Vendor/PsdFile uses unsafe for RLE/Zip perf) -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <ApplicationIcon>..\..\assets\icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Pfim" Version="0.11.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="..\..\assets\icon.ico" Link="icon.ico" />
   </ItemGroup>
 
 </Project>
