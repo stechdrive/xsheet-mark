@@ -5,10 +5,12 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.ComponentModel;
 using System.Linq;
 using XsheetMark.Commands;
 using XsheetMark.Interop;
 using XsheetMark.Localization;
+using XsheetMark.Settings;
 using XsheetMark.Tools;
 using XsheetMark.Viewport;
 using XsheetMark.Workspace;
@@ -40,6 +42,58 @@ public partial class MainWindow : Window
         Ink.Strokes.StrokesChanged += OnStrokesChanged;
         _undoStack.Changed += OnUndoStackChanged;
         RefreshUndoButtons();
+
+        ApplySavedSettings();
+        Closing += OnWindowClosing;
+    }
+
+    private void ApplySavedSettings()
+    {
+        var s = SettingsStore.Load();
+        var workArea = SystemParameters.WorkArea;
+
+        // Fall back to a screen-aware size when the user has no saved size yet,
+        // so a fresh install on a 1366×768 laptop doesn't open cropped below
+        // the taskbar.
+        double fallbackWidth = Math.Min(Width, Math.Max(MinWidth, workArea.Width - 40));
+        double fallbackHeight = Math.Min(Height, Math.Max(MinHeight, workArea.Height - 40));
+        Width = Math.Max(MinWidth, s.Width ?? fallbackWidth);
+        Height = Math.Max(MinHeight, s.Height ?? fallbackHeight);
+
+        if (s.Left is double left && s.Top is double top)
+        {
+            // Clamp into the virtual screen so a window saved on a now-
+            // disconnected monitor doesn't reappear off-screen.
+            double minLeft = SystemParameters.VirtualScreenLeft;
+            double minTop = SystemParameters.VirtualScreenTop;
+            double maxLeft = minLeft + SystemParameters.VirtualScreenWidth - Width;
+            double maxTop = minTop + SystemParameters.VirtualScreenHeight - Height;
+            Left = Math.Clamp(left, minLeft, Math.Max(minLeft, maxLeft));
+            Top = Math.Clamp(top, minTop, Math.Max(minTop, maxTop));
+            WindowStartupLocation = WindowStartupLocation.Manual;
+        }
+
+        if (s.WindowOpacity is double wo)
+        {
+            WindowOpacitySlider.Value = Math.Clamp(wo, WindowOpacitySlider.Minimum, WindowOpacitySlider.Maximum);
+        }
+        if (s.ImageOpacity is double io)
+        {
+            ImageOpacitySlider.Value = Math.Clamp(io, ImageOpacitySlider.Minimum, ImageOpacitySlider.Maximum);
+        }
+    }
+
+    private void OnWindowClosing(object? sender, CancelEventArgs e)
+    {
+        SettingsStore.Save(new UserSettings
+        {
+            Left = Left,
+            Top = Top,
+            Width = ActualWidth,
+            Height = ActualHeight,
+            WindowOpacity = WindowOpacitySlider.Value,
+            ImageOpacity = ImageOpacitySlider.Value,
+        });
     }
 
     private void OnStrokesChanged(object? sender, System.Windows.Ink.StrokeCollectionChangedEventArgs e)

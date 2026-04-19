@@ -97,5 +97,15 @@ public class InkToolState
         _ink.DefaultDrawingAttributes.Height = _penWidth;
         double eraserSize = _eraserWidth * EraserMultiplier;
         _ink.EraserShape = new EllipseStylusShape(eraserSize, eraserSize);
+
+        // InkCanvas caches the eraser cursor from EraserShape at the moment
+        // EditingMode was last assigned. Changing EraserShape alone doesn't
+        // redraw the on-screen cursor — we have to poke EditingMode for the
+        // new size to take effect visually.
+        if (_tool == Tool.Eraser)
+        {
+            _ink.EditingMode = InkCanvasEditingMode.None;
+            _ink.EditingMode = InkCanvasEditingMode.EraseByPoint;
+        }
     }
 }
