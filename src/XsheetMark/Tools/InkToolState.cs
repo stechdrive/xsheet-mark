@@ -20,9 +20,9 @@ public class InkToolState
     private readonly InkCanvas _ink;
 
     private Tool _tool = Tool.Pen;
-    private Color _color = Colors.Black;
-    private double _penWidth = 2;
-    private double _eraserWidth = 2;
+    private Color _color = Color.FromRgb(0xE0, 0x40, 0x40);
+    private double _penWidth = 5;
+    private double _eraserWidth = 10;
 
     public InkToolState(InkCanvas ink)
     {

@@ -1,0 +1,32 @@
+<Window x:Class="XsheetMark.Dialogs.ClickThroughConfirmDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="{DynamicResource ClickThrough.DialogTitle}"
+        SizeToContent="WidthAndHeight"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        MinWidth="420" MaxWidth="520"
+        Background="#1F1F1F"
+        Foreground="#E8E8E8">
+    <StackPanel Margin="22">
+        <TextBlock Text="{DynamicResource ClickThrough.DialogBody}"
+                   TextWrapping="Wrap"
+                   Margin="0,0,0,14"
+                   LineHeight="20"/>
+        <CheckBox x:Name="DontShowAgain"
+                  Content="{DynamicResource ClickThrough.DontShowAgain}"
+                  Foreground="#C8C8C8"
+                  Margin="0,0,0,18"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="{DynamicResource Dialog.Cancel}"
+                    IsCancel="True"
+                    Click="Cancel_Click"
+                    MinWidth="90" Height="28" Margin="4,0"/>
+            <Button Content="{DynamicResource ClickThrough.Enable}"
+                    IsDefault="True"
+                    Click="Confirm_Click"
+                    MinWidth="120" Height="28" Margin="4,0"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

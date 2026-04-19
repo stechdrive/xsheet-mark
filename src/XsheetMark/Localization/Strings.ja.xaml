@@ -6,7 +6,9 @@
     <s:String x:Key="Tooltip.Pen">ペン</s:String>
     <s:String x:Key="Tooltip.Eraser">消しゴム</s:String>
     <s:String x:Key="Tooltip.Move">画像を移動</s:String>
+    <s:String x:Key="Tooltip.CurrentColor">現在の色 — 長押しで色を選択</s:String>
     <s:String x:Key="Tooltip.ColorBlack">黒</s:String>
+    <s:String x:Key="Tooltip.ColorWhite">白</s:String>
     <s:String x:Key="Tooltip.ColorRed">赤</s:String>
     <s:String x:Key="Tooltip.ColorBlue">青</s:String>
     <s:String x:Key="Tooltip.ColorGreen">緑</s:String>
@@ -18,6 +20,15 @@
     <s:String x:Key="Tooltip.ExportPsd">PSD で書き出し（画像ごと）</s:String>
     <s:String x:Key="Tooltip.CapturePsd">ビューポートを PSD でキャプチャ</s:String>
     <s:String x:Key="Tooltip.Reset">キャンバスをクリア（取り消し可）</s:String>
+    <s:String x:Key="Tooltip.Lock">オーバーレイをロック（クリックスルー）</s:String>
+
+    <s:String x:Key="ClickThrough.DialogTitle">クリックスルーを有効にしますか？</s:String>
+    <s:String x:Key="ClickThrough.DialogBody">クリックスルー中は、このウィンドウへのクリックやペン操作が裏のアプリへ貫通します。描画は見えたまま残りますが、ロックを解除するまで編集できなくなります。&#x0a;&#x0a;解除するには、タスクバーの xsheet-mark アイコンにマウスを重ねて、サムネイル下に出る 🔓 ボタンをクリックしてください。</s:String>
+    <s:String x:Key="ClickThrough.DontShowAgain">今後この警告を表示しない</s:String>
+    <s:String x:Key="ClickThrough.Enable">有効化</s:String>
+    <s:String x:Key="ClickThrough.ThumbLock">オーバーレイをロック</s:String>
+    <s:String x:Key="ClickThrough.ThumbUnlock">ロック解除</s:String>
+    <s:String x:Key="Dialog.Cancel">キャンセル</s:String>
     <s:String x:Key="Tooltip.Minimize">最小化</s:String>
     <s:String x:Key="Tooltip.Close">閉じる</s:String>
     <s:String x:Key="Tooltip.WindowOpacity">ウィンドウの不透明度</s:String>

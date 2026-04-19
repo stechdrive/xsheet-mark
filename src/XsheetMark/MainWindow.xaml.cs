@@ -5,8 +5,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.ComponentModel;
 using System.Linq;
+using System.Windows.Threading;
 using XsheetMark.Commands;
 using XsheetMark.Interop;
 using XsheetMark.Localization;
@@ -31,10 +33,7 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         _viewport = new CanvasViewport(Viewport, WorldScale, WorldTranslate);
-        _inkTools = new InkToolState(Ink)
-        {
-            Color = Color.FromRgb(0x20, 0x20, 0x20),
-        };
+        _inkTools = new InkToolState(Ink);
         _workspace = new ImageWorkspace(ImageLayer, Ink, _undoStack);
         WindowChromeInterop.Attach(this);
 
@@ -129,6 +128,56 @@ public partial class MainWindow : Window
     private void Undo_Click(object sender, RoutedEventArgs e) => _undoStack.Undo();
     private void Redo_Click(object sender, RoutedEventArgs e) => _undoStack.Redo();
     private void Reset_Click(object sender, RoutedEventArgs e) => _workspace.Reset();
+
+    private bool _clickThrough;
+
+    private void ToggleClickThrough_Click(object sender, RoutedEventArgs e) => ToggleClickThrough();
+
+    private void ToggleClickThrough_ThumbClick(object? sender, EventArgs e) => ToggleClickThrough();
+
+    private void ToggleClickThrough()
+    {
+        if (_clickThrough)
+        {
+            ApplyClickThrough(false);
+            return;
+        }
+
+        var settings = SettingsStore.Load();
+        if (settings.SuppressClickThroughWarning != true)
+        {
+            var dialog = new Dialogs.ClickThroughConfirmDialog { Owner = this };
+            dialog.ShowDialog();
+            if (!dialog.Confirmed) return;
+            if (dialog.DoNotShowAgain)
+            {
+                settings.SuppressClickThroughWarning = true;
+                SettingsStore.Save(settings);
+            }
+        }
+
+        ApplyClickThrough(true);
+    }
+
+    private void ApplyClickThrough(bool enabled)
+    {
+        _clickThrough = enabled;
+        WindowChromeInterop.SetClickThrough(this, enabled);
+
+        if (LockThumbButton is not null)
+        {
+            LockThumbButton.Description = Localizer.Get(enabled ? "ClickThrough.ThumbUnlock" : "ClickThrough.ThumbLock");
+            LockThumbButton.ImageSource = new BitmapImage(
+                new Uri(enabled ? "pack://application:,,,/unlock.ico" : "pack://application:,,,/lock.ico"));
+        }
+
+        if (OuterBorder is not null)
+        {
+            OuterBorder.BorderBrush = enabled
+                ? new SolidColorBrush(Color.FromRgb(0xE0, 0x40, 0x40))
+                : new SolidColorBrush(Color.FromArgb(0x80, 0xFF, 0xFF, 0xFF));
+        }
+    }
 
     private void CapturePsd_Click(object sender, RoutedEventArgs e)
     {
@@ -267,13 +316,61 @@ public partial class MainWindow : Window
         WidthThick.IsChecked = Math.Abs(w - 10) < 1e-6;
     }
 
-    private void OnColorChanged(object sender, RoutedEventArgs e)
+    private DispatcherTimer? _colorLongPressTimer;
+    private static readonly TimeSpan ColorLongPressDuration = TimeSpan.FromMilliseconds(350);
+
+    private void CurrentColor_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        CancelColorLongPress();
+        _colorLongPressTimer = new DispatcherTimer { Interval = ColorLongPressDuration };
+        _colorLongPressTimer.Tick += OnColorLongPressFired;
+        _colorLongPressTimer.Start();
+    }
+
+    private void CurrentColor_PreviewMouseUp(object sender, MouseButtonEventArgs e) => CancelColorLongPress();
+
+    private void CurrentColor_MouseLeave(object sender, MouseEventArgs e) => CancelColorLongPress();
+
+    private void OnColorLongPressFired(object? sender, EventArgs e)
+    {
+        CancelColorLongPress();
+        ColorPopup.IsOpen = true;
+    }
+
+    private void CancelColorLongPress()
+    {
+        if (_colorLongPressTimer is null) return;
+        _colorLongPressTimer.Stop();
+        _colorLongPressTimer.Tick -= OnColorLongPressFired;
+        _colorLongPressTimer = null;
+    }
+
+    private void PickColor_Click(object sender, RoutedEventArgs e)
     {
         if (_inkTools is null) return;
-        if (sender is RadioButton rb && rb.Background is SolidColorBrush brush)
+        if (sender is Button btn && btn.Background is SolidColorBrush brush)
         {
             _inkTools.Color = brush.Color;
+            CurrentColorButton.Background = brush;
         }
+        ColorPopup.IsOpen = false;
+    }
+
+    // StaysOpen=False is unreliable on a WS_EX_NOACTIVATE transparent window
+    // (its mouse capture can fail to install), so we dismiss the popup manually.
+    // Popup input DOES tunnel to the main window via the Popup's logical-parent
+    // chain, so we must skip clicks whose source is inside the popup — otherwise
+    // closing here swallows the MouseUp and PickColor_Click never fires.
+    private void OnWindowPreviewMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (!ColorPopup.IsOpen) return;
+        if (ColorPopup.Child is Visual popupContent &&
+            e.OriginalSource is Visual src &&
+            (ReferenceEquals(src, popupContent) || popupContent.IsAncestorOf(src)))
+        {
+            return;
+        }
+        ColorPopup.IsOpen = false;
     }
 
     private void OnWidthChanged(object sender, RoutedEventArgs e)

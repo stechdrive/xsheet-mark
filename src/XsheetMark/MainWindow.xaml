@@ -16,7 +16,18 @@
         ResizeMode="CanResize"
         AllowDrop="True"
         DragOver="OnDragOver"
-        Drop="OnDrop">
+        Drop="OnDrop"
+        PreviewMouseDown="OnWindowPreviewMouseDown">
+    <Window.TaskbarItemInfo>
+        <TaskbarItemInfo>
+            <TaskbarItemInfo.ThumbButtonInfos>
+                <ThumbButtonInfo x:Name="LockThumbButton"
+                                 Description="{DynamicResource ClickThrough.ThumbLock}"
+                                 ImageSource="/lock.ico"
+                                 Click="ToggleClickThrough_ThumbClick"/>
+            </TaskbarItemInfo.ThumbButtonInfos>
+        </TaskbarItemInfo>
+    </Window.TaskbarItemInfo>
     <Window.Resources>
         <Style x:Key="ChromeButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
@@ -66,22 +77,41 @@
             </Setter>
         </Style>
 
-        <Style x:Key="ColorSwatch" TargetType="RadioButton">
+        <Style x:Key="CurrentColorSwatch" TargetType="Button">
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="#E04040"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Ellipse x:Name="ring" Width="32" Height="32" Stroke="#80FFFFFF" StrokeThickness="2"/>
+                            <Ellipse Width="24" Height="24" Fill="{TemplateBinding Background}"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ring" Property="Stroke" Value="#FFFFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PopupColorSwatch" TargetType="Button">
             <Setter Property="Width" Value="40"/>
             <Setter Property="Height" Value="32"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="RadioButton">
+                    <ControlTemplate TargetType="Button">
                         <Grid>
                             <Ellipse x:Name="ring" Width="28" Height="28" Stroke="Transparent" StrokeThickness="2"/>
                             <Ellipse Width="20" Height="20" Fill="{TemplateBinding Background}"/>
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ring" Property="Stroke" Value="#60FFFFFF"/>
-                            </Trigger>
-                            <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="ring" Property="Stroke" Value="#FFFFFFFF"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -91,7 +121,7 @@
         </Style>
     </Window.Resources>
 
-    <Border Background="#25000000" BorderBrush="#80FFFFFF" BorderThickness="1">
+    <Border x:Name="OuterBorder" Background="#25000000" BorderBrush="#80FFFFFF" BorderThickness="1">
         <Grid>
             <Canvas x:Name="Viewport"
                     Margin="0,28,0,0"
@@ -256,32 +286,52 @@
 
                     <Rectangle Height="1" Margin="4,6" Fill="#40FFFFFF"/>
 
-                    <RadioButton Style="{StaticResource ColorSwatch}"
-                                 GroupName="Colors"
-                                 Background="#202020"
-                                 IsChecked="True"
-                                 Checked="OnColorChanged"
-                                 ToolTip="{DynamicResource Tooltip.ColorBlack}"/>
-                    <RadioButton Style="{StaticResource ColorSwatch}"
-                                 GroupName="Colors"
-                                 Background="#E04040"
-                                 Checked="OnColorChanged"
-                                 ToolTip="{DynamicResource Tooltip.ColorRed}"/>
-                    <RadioButton Style="{StaticResource ColorSwatch}"
-                                 GroupName="Colors"
-                                 Background="#4080E0"
-                                 Checked="OnColorChanged"
-                                 ToolTip="{DynamicResource Tooltip.ColorBlue}"/>
-                    <RadioButton Style="{StaticResource ColorSwatch}"
-                                 GroupName="Colors"
-                                 Background="#50B050"
-                                 Checked="OnColorChanged"
-                                 ToolTip="{DynamicResource Tooltip.ColorGreen}"/>
-                    <RadioButton Style="{StaticResource ColorSwatch}"
-                                 GroupName="Colors"
-                                 Background="#E0C040"
-                                 Checked="OnColorChanged"
-                                 ToolTip="{DynamicResource Tooltip.ColorYellow}"/>
+                    <Button x:Name="CurrentColorButton"
+                            Style="{StaticResource CurrentColorSwatch}"
+                            Background="#E04040"
+                            PreviewMouseLeftButtonDown="CurrentColor_PreviewMouseDown"
+                            PreviewMouseLeftButtonUp="CurrentColor_PreviewMouseUp"
+                            MouseLeave="CurrentColor_MouseLeave"
+                            ToolTip="{DynamicResource Tooltip.CurrentColor}"/>
+
+                    <Popup x:Name="ColorPopup"
+                           PlacementTarget="{Binding ElementName=CurrentColorButton}"
+                           Placement="Right"
+                           StaysOpen="False"
+                           AllowsTransparency="True">
+                        <Border Background="#D8000000"
+                                CornerRadius="6"
+                                BorderBrush="#80FFFFFF"
+                                BorderThickness="1"
+                                Padding="6">
+                            <StackPanel Orientation="Vertical">
+                                <Button Style="{StaticResource PopupColorSwatch}"
+                                        Background="#202020"
+                                        Click="PickColor_Click"
+                                        ToolTip="{DynamicResource Tooltip.ColorBlack}"/>
+                                <Button Style="{StaticResource PopupColorSwatch}"
+                                        Background="#FFFFFF"
+                                        Click="PickColor_Click"
+                                        ToolTip="{DynamicResource Tooltip.ColorWhite}"/>
+                                <Button Style="{StaticResource PopupColorSwatch}"
+                                        Background="#E04040"
+                                        Click="PickColor_Click"
+                                        ToolTip="{DynamicResource Tooltip.ColorRed}"/>
+                                <Button Style="{StaticResource PopupColorSwatch}"
+                                        Background="#4080E0"
+                                        Click="PickColor_Click"
+                                        ToolTip="{DynamicResource Tooltip.ColorBlue}"/>
+                                <Button Style="{StaticResource PopupColorSwatch}"
+                                        Background="#50B050"
+                                        Click="PickColor_Click"
+                                        ToolTip="{DynamicResource Tooltip.ColorGreen}"/>
+                                <Button Style="{StaticResource PopupColorSwatch}"
+                                        Background="#E0C040"
+                                        Click="PickColor_Click"
+                                        ToolTip="{DynamicResource Tooltip.ColorYellow}"/>
+                            </StackPanel>
+                        </Border>
+                    </Popup>
 
                     <Rectangle Height="1" Margin="4,6" Fill="#40FFFFFF"/>
 
@@ -289,7 +339,6 @@
                                  Style="{StaticResource ToolButton}"
                                  GroupName="Widths"
                                  Tag="2"
-                                 IsChecked="True"
                                  Checked="OnWidthChanged"
                                  ToolTip="{DynamicResource Tooltip.WidthThin}">
                         <Rectangle Width="24" Height="2" Fill="#E8E8E8"/>
@@ -298,6 +347,7 @@
                                  Style="{StaticResource ToolButton}"
                                  GroupName="Widths"
                                  Tag="5"
+                                 IsChecked="True"
                                  Checked="OnWidthChanged"
                                  ToolTip="{DynamicResource Tooltip.WidthMedium}">
                         <Rectangle Width="24" Height="5" Fill="#E8E8E8"/>
@@ -336,6 +386,14 @@
                             ToolTip="{DynamicResource Tooltip.CapturePsd}"/>
 
                     <Rectangle Height="1" Margin="4,6" Fill="#40FFFFFF"/>
+
+                    <Button x:Name="LockButton"
+                            Style="{StaticResource ChromeButton}"
+                            Content="🔒"
+                            Width="40" Height="40"
+                            FontSize="16"
+                            Click="ToggleClickThrough_Click"
+                            ToolTip="{DynamicResource Tooltip.Lock}"/>
 
                     <Button Style="{StaticResource ChromeButton}"
                             Content="🗑"

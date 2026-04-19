@@ -16,6 +16,8 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
     <ApplicationIcon>..\..\assets\icon.ico</ApplicationIcon>
+
+    <Version>0.2.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,6 +26,8 @@
 
   <ItemGroup>
     <Resource Include="..\..\assets\icon.ico" Link="icon.ico" />
+    <Resource Include="..\..\assets\lock.ico" Link="lock.ico" />
+    <Resource Include="..\..\assets\unlock.ico" Link="unlock.ico" />
   </ItemGroup>
 
 </Project>

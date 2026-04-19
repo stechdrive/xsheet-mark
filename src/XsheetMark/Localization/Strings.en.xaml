@@ -6,7 +6,9 @@
     <s:String x:Key="Tooltip.Pen">Pen</s:String>
     <s:String x:Key="Tooltip.Eraser">Eraser</s:String>
     <s:String x:Key="Tooltip.Move">Move images</s:String>
+    <s:String x:Key="Tooltip.CurrentColor">Current color — long-press to pick</s:String>
     <s:String x:Key="Tooltip.ColorBlack">Black</s:String>
+    <s:String x:Key="Tooltip.ColorWhite">White</s:String>
     <s:String x:Key="Tooltip.ColorRed">Red</s:String>
     <s:String x:Key="Tooltip.ColorBlue">Blue</s:String>
     <s:String x:Key="Tooltip.ColorGreen">Green</s:String>
@@ -18,6 +20,15 @@
     <s:String x:Key="Tooltip.ExportPsd">Export as PSD (per image)</s:String>
     <s:String x:Key="Tooltip.CapturePsd">Capture viewport as PSD</s:String>
     <s:String x:Key="Tooltip.Reset">Clear canvas (undoable)</s:String>
+    <s:String x:Key="Tooltip.Lock">Lock overlay (click-through)</s:String>
+
+    <s:String x:Key="ClickThrough.DialogTitle">Enable click-through?</s:String>
+    <s:String x:Key="ClickThrough.DialogBody">While click-through is on, clicks and pen strokes on this window pass through to the app behind it. Your drawings stay visible but cannot be edited until you unlock.&#x0a;&#x0a;To unlock, hover the xsheet-mark icon in the taskbar and click the 🔓 button that appears in the thumbnail preview.</s:String>
+    <s:String x:Key="ClickThrough.DontShowAgain">Don't show this warning again</s:String>
+    <s:String x:Key="ClickThrough.Enable">Enable</s:String>
+    <s:String x:Key="ClickThrough.ThumbLock">Lock overlay</s:String>
+    <s:String x:Key="ClickThrough.ThumbUnlock">Unlock overlay</s:String>
+    <s:String x:Key="Dialog.Cancel">Cancel</s:String>
     <s:String x:Key="Tooltip.Minimize">Minimize</s:String>
     <s:String x:Key="Tooltip.Close">Close</s:String>
     <s:String x:Key="Tooltip.WindowOpacity">Window opacity</s:String>

@@ -14,6 +14,7 @@ public static class WindowChromeInterop
 {
     private const int GWL_EXSTYLE = -20;
     private const int WS_EX_NOACTIVATE = 0x08000000;
+    private const int WS_EX_TRANSPARENT = 0x00000020;
     private const int WM_MOUSEACTIVATE = 0x0021;
     private const int MA_NOACTIVATE = 0x0003;
     private const int WM_NCLBUTTONDOWN = 0x00A1;
@@ -69,6 +70,23 @@ public static class WindowChromeInterop
         ArgumentNullException.ThrowIfNull(window);
         ReleaseCapture();
         SendMessage(new WindowInteropHelper(window).Handle, WM_NCLBUTTONDOWN, (IntPtr)HTCAPTION, IntPtr.Zero);
+    }
+
+    /// <summary>
+    /// Toggles WS_EX_TRANSPARENT, making mouse/pen events pass through the
+    /// window to the app underneath. The window stays visible — only input
+    /// is affected. The only way out is an input path that doesn't require
+    /// the window itself to receive events (taskbar thumb button, etc.).
+    /// </summary>
+    public static void SetClickThrough(Window window, bool enabled)
+    {
+        ArgumentNullException.ThrowIfNull(window);
+        var hwnd = new WindowInteropHelper(window).Handle;
+        if (hwnd == IntPtr.Zero) return;
+        var exStyle = GetWindowLongPtr(hwnd, GWL_EXSTYLE).ToInt64();
+        if (enabled) exStyle |= WS_EX_TRANSPARENT;
+        else exStyle &= ~WS_EX_TRANSPARENT;
+        SetWindowLongPtr(hwnd, GWL_EXSTYLE, new IntPtr(exStyle));
     }
 
     private static void OnSourceInitialized(Window window)

@@ -16,7 +16,8 @@ A transparent always-on-top drawing overlay for Windows. Write pen or mouse anno
 - **Transparent always-on-top overlay** that doesn't steal keyboard or pointer input from the app below
 - **Pen tablet support** — pressure-sensitive ink via Windows Ink (tested on HUION; Wacom-compatible)
 - **Infinite canvas** — drop any number of images side-by-side, pan and zoom freely
-- **5 ink colors, 3 widths, point-based eraser**; pen and eraser each remember their own width
+- **6 ink colors, 3 widths, point-based eraser**; pen and eraser each remember their own width
+- **Lock overlay (click-through)** — flip the overlay into a see-but-don't-touch layer so clicks and pen input pass through to the app below while your strokes stay visible. Unlock from the taskbar thumbnail button.
 - **Undo / Redo** for strokes, image drops, image moves, and canvas clears
 - **Separate opacity sliders** for the whole window and for loaded images
 - **Image formats** — PSD, PSB, JPG, PNG, BMP, GIF, TIFF, TGA
@@ -61,11 +62,12 @@ A transparent always-on-top drawing overlay for Windows. Write pen or mouse anno
 | ✎ | Pen |
 | ⌫ | Eraser (removes partial strokes; size follows the line-width selector) |
 | ✥ | Move — drag an image to reposition it; strokes on the image follow |
-| ● | Ink color (black / red / blue / green / yellow) |
+| ● | Current ink color — **long-press** (~0.35 s) to open the color picker (black / white / red / blue / green / yellow) |
 | ▬ | Line width — pen and eraser remember their own |
 | ⛶ | Fit all images to the window |
 | 💾 | Export each image as its own PSD |
 | 📷 | Capture the current viewport as a single PSD (transparent background) |
+| 🔒 | Lock overlay — turns the window click-through so input falls to the app below. See [Lock overlay](#lock-overlay-click-through) |
 | 🗑 | Clear the canvas (undoable) |
 
 ### Canvas controls
@@ -83,6 +85,16 @@ Two buttons, two intents:
 - 📷 **Capture** — one viewport-sized PSD regardless of images, with a **transparent background**, for overlay-annotation workflows where the marks will be composited over other content.
 
 Both write to a folder you pick, and file-name collisions get a numeric suffix (`-2`, `-3`, ...).
+
+### Lock overlay (click-through)
+
+Click **🔒** in the toolbar to put the overlay into click-through mode. Your drawings stay on screen, but clicks and pen input pass through to the app underneath — useful when you want to keep notes visible while resuming work in the app below without closing the overlay.
+
+Because the overlay no longer accepts clicks in this mode, you unlock it from **outside** the window:
+
+- Hover the xsheet-mark icon in the taskbar until the thumbnail preview appears, then click the **🔓** button below the thumbnail.
+
+The border turns red while locked so you can tell at a glance. The first time you enable click-through the app shows a one-time warning explaining how to unlock; you can suppress it with the checkbox.
 
 ### Pen pressure
 

@@ -17,6 +17,7 @@ public class UserSettings
     public double? Height { get; set; }
     public double? WindowOpacity { get; set; }
     public double? ImageOpacity { get; set; }
+    public bool? SuppressClickThroughWarning { get; set; }
 }
 
 /// <summary>
