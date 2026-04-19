@@ -16,6 +16,7 @@
     <s:String x:Key="Tooltip.WidthThick">Thick</s:String>
     <s:String x:Key="Tooltip.FitAll">Fit all</s:String>
     <s:String x:Key="Tooltip.ExportPsd">Export as PSD</s:String>
+    <s:String x:Key="Tooltip.Reset">Clear canvas (undoable)</s:String>
     <s:String x:Key="Tooltip.Minimize">Minimize</s:String>
     <s:String x:Key="Tooltip.Close">Close</s:String>
     <s:String x:Key="Tooltip.WindowOpacity">Window opacity</s:String>

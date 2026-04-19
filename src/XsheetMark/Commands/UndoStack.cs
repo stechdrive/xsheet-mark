@@ -56,6 +56,21 @@ public sealed class UndoStack
         OnChanged();
     }
 
+    /// <summary>
+    /// Pushes a command and immediately runs its Redo under IsApplying so that
+    /// side-effect handlers (e.g. InkCanvas.Strokes.StrokesChanged) don't try
+    /// to push their own command for the same change. Use this when the
+    /// command itself is the "do" action, not a record of something that has
+    /// already happened.
+    /// </summary>
+    public void PushAndExecute(ICanvasCommand command)
+    {
+        Push(command);
+        IsApplying = true;
+        try { command.Redo(); }
+        finally { IsApplying = false; }
+    }
+
     public void Undo()
     {
         if (!CanUndo) return;

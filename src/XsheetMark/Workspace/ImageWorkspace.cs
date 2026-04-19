@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Ink;
@@ -226,6 +227,53 @@ public class ImageWorkspace
         {
             var m = new Matrix(1, 0, 0, 1, dx, dy);
             foreach (var s in strokes) s.Transform(m, applyToStylusTip: false);
+        }
+    }
+
+    /// <summary>
+    /// Removes every image and every stroke from the canvas. Undoable — the
+    /// entire state (images with their positions and origins, strokes) is
+    /// captured and restored on undo.
+    /// </summary>
+    public void Reset()
+    {
+        if (_imageLayer.Children.Count == 0 && _inkCanvas.Strokes.Count == 0) return;
+
+        var imageRecords = _imageLayer.Children.OfType<Image>()
+            .Select(img => (
+                image: img,
+                left: GetLeftOrZero(img),
+                top: GetTopOrZero(img),
+                origin: _origins.GetValueOrDefault(img)))
+            .ToArray();
+        var strokeSnapshot = _inkCanvas.Strokes.ToArray();
+
+        var command = new LambdaCommand(
+            redo: () =>
+            {
+                _imageLayer.Children.Clear();
+                _origins.Clear();
+                _inkCanvas.Strokes.Clear();
+            },
+            undo: () =>
+            {
+                foreach (var r in imageRecords)
+                {
+                    Canvas.SetLeft(r.image, r.left);
+                    Canvas.SetTop(r.image, r.top);
+                    _imageLayer.Children.Add(r.image);
+                    if (r.origin is not null) _origins[r.image] = r.origin;
+                }
+                foreach (var s in strokeSnapshot) _inkCanvas.Strokes.Add(s);
+            });
+
+        if (_undoStack is not null)
+        {
+            _undoStack.PushAndExecute(command);
+        }
+        else
+        {
+            command.Redo();
         }
     }
 

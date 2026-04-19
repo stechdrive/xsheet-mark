@@ -74,6 +74,7 @@ public partial class MainWindow : Window
 
     private void Undo_Click(object sender, RoutedEventArgs e) => _undoStack.Undo();
     private void Redo_Click(object sender, RoutedEventArgs e) => _undoStack.Redo();
+    private void Reset_Click(object sender, RoutedEventArgs e) => _workspace.Reset();
 
     private void DragBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) =>
         WindowChromeInterop.BeginTitleBarDrag(this);

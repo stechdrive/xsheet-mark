@@ -16,6 +16,7 @@
     <s:String x:Key="Tooltip.WidthThick">太</s:String>
     <s:String x:Key="Tooltip.FitAll">全体表示</s:String>
     <s:String x:Key="Tooltip.ExportPsd">PSD で書き出し</s:String>
+    <s:String x:Key="Tooltip.Reset">キャンバスをクリア（取り消し可）</s:String>
     <s:String x:Key="Tooltip.Minimize">最小化</s:String>
     <s:String x:Key="Tooltip.Close">閉じる</s:String>
     <s:String x:Key="Tooltip.WindowOpacity">ウィンドウの不透明度</s:String>
