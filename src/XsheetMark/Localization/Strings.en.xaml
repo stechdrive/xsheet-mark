@@ -1,6 +1,8 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:s="clr-namespace:System;assembly=mscorlib">
+    <s:String x:Key="Tooltip.Undo">Undo</s:String>
+    <s:String x:Key="Tooltip.Redo">Redo</s:String>
     <s:String x:Key="Tooltip.Pen">Pen</s:String>
     <s:String x:Key="Tooltip.Eraser">Eraser</s:String>
     <s:String x:Key="Tooltip.Move">Move images</s:String>

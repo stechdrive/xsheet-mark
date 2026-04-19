@@ -211,6 +211,25 @@
                     Padding="4"
                     CornerRadius="6">
                 <StackPanel Orientation="Vertical">
+                    <Button x:Name="UndoButton"
+                            Style="{StaticResource ChromeButton}"
+                            Content="↶"
+                            Width="40" Height="40"
+                            FontSize="18"
+                            IsEnabled="False"
+                            Click="Undo_Click"
+                            ToolTip="{DynamicResource Tooltip.Undo}"/>
+                    <Button x:Name="RedoButton"
+                            Style="{StaticResource ChromeButton}"
+                            Content="↷"
+                            Width="40" Height="40"
+                            FontSize="18"
+                            IsEnabled="False"
+                            Click="Redo_Click"
+                            ToolTip="{DynamicResource Tooltip.Redo}"/>
+
+                    <Rectangle Height="1" Margin="4,6" Fill="#40FFFFFF"/>
+
                     <RadioButton x:Name="PenTool"
                                  Style="{StaticResource ToolButton}"
                                  GroupName="Tools"

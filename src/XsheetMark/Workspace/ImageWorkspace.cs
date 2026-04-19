@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Ink;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using XsheetMark.Commands;
 using XsheetMark.Psd;
 using XsheetMark.Tga;
 
@@ -29,6 +30,7 @@ public class ImageWorkspace
 
     private readonly Canvas _imageLayer;
     private readonly InkCanvas _inkCanvas;
+    private readonly UndoStack? _undoStack;
     private readonly Dictionary<Image, ImageOrigin> _origins = new();
 
     private Image? _draggingImage;
@@ -42,12 +44,13 @@ public class ImageWorkspace
     public bool IsMoving => _draggingImage != null;
     public bool HasImages => _imageLayer.Children.Count > 0;
 
-    public ImageWorkspace(Canvas imageLayer, InkCanvas inkCanvas)
+    public ImageWorkspace(Canvas imageLayer, InkCanvas inkCanvas, UndoStack? undoStack = null)
     {
         ArgumentNullException.ThrowIfNull(imageLayer);
         ArgumentNullException.ThrowIfNull(inkCanvas);
         _imageLayer = imageLayer;
         _inkCanvas = inkCanvas;
+        _undoStack = undoStack;
     }
 
     private sealed class ImageOrigin
@@ -87,8 +90,23 @@ public class ImageWorkspace
         Canvas.SetLeft(img, x);
         Canvas.SetTop(img, y);
         _imageLayer.Children.Add(img);
+        var origin = new ImageOrigin { SourcePath = path, IsPsd = isPsd };
+        _origins[img] = origin;
 
-        _origins[img] = new ImageOrigin { SourcePath = path, IsPsd = isPsd };
+        _undoStack?.Push(new LambdaCommand(
+            redo: () =>
+            {
+                if (!_imageLayer.Children.Contains(img))
+                {
+                    _imageLayer.Children.Add(img);
+                }
+                _origins[img] = origin;
+            },
+            undo: () =>
+            {
+                _imageLayer.Children.Remove(img);
+                _origins.Remove(img);
+            }));
 
         pixelWidth = source.PixelWidth;
         pixelHeight = source.PixelHeight;
@@ -179,8 +197,36 @@ public class ImageWorkspace
 
     public void EndMove()
     {
+        var img = _draggingImage;
+        var strokes = _followingStrokes;
+        var dx = _lastAppliedDx;
+        var dy = _lastAppliedDy;
+
         _draggingImage = null;
         _followingStrokes = Array.Empty<Stroke>();
+
+        if (img is null) return;
+        if (dx == 0 && dy == 0) return;
+
+        _undoStack?.Push(new LambdaCommand(
+            redo: () => ApplyMoveDelta(img, dx, dy, strokes),
+            undo: () => ApplyMoveDelta(img, -dx, -dy, strokes)));
+    }
+
+    private static void ApplyMoveDelta(Image img, double dx, double dy, Stroke[] strokes)
+    {
+        double left = Canvas.GetLeft(img);
+        if (double.IsNaN(left)) left = 0;
+        double top = Canvas.GetTop(img);
+        if (double.IsNaN(top)) top = 0;
+        Canvas.SetLeft(img, left + dx);
+        Canvas.SetTop(img, top + dy);
+
+        if (strokes.Length > 0)
+        {
+            var m = new Matrix(1, 0, 0, 1, dx, dy);
+            foreach (var s in strokes) s.Transform(m, applyToStylusTip: false);
+        }
     }
 
     /// <summary>

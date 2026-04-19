@@ -5,6 +5,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Linq;
+using XsheetMark.Commands;
 using XsheetMark.Interop;
 using XsheetMark.Localization;
 using XsheetMark.Tools;
@@ -18,6 +20,7 @@ public partial class MainWindow : Window
     private readonly CanvasViewport _viewport;
     private readonly InkToolState _inkTools;
     private readonly ImageWorkspace _workspace;
+    private readonly UndoStack _undoStack = new();
 
     private int _strokeCount;
 
@@ -30,11 +33,47 @@ public partial class MainWindow : Window
         {
             Color = Color.FromRgb(0x20, 0x20, 0x20),
         };
-        _workspace = new ImageWorkspace(ImageLayer, Ink);
+        _workspace = new ImageWorkspace(ImageLayer, Ink, _undoStack);
         WindowChromeInterop.Attach(this);
 
         Ink.StrokeCollected += OnStrokeCollected;
+        Ink.Strokes.StrokesChanged += OnStrokesChanged;
+        _undoStack.Changed += OnUndoStackChanged;
+        RefreshUndoButtons();
     }
+
+    private void OnStrokesChanged(object? sender, System.Windows.Ink.StrokeCollectionChangedEventArgs e)
+    {
+        if (_undoStack.IsApplying) return;
+        if (e.Added.Count == 0 && e.Removed.Count == 0) return;
+
+        var added = e.Added.ToArray();
+        var removed = e.Removed.ToArray();
+        var strokes = Ink.Strokes;
+
+        _undoStack.Push(new LambdaCommand(
+            redo: () =>
+            {
+                foreach (var s in removed) strokes.Remove(s);
+                foreach (var s in added) strokes.Add(s);
+            },
+            undo: () =>
+            {
+                foreach (var s in added) strokes.Remove(s);
+                foreach (var s in removed) strokes.Add(s);
+            }));
+    }
+
+    private void OnUndoStackChanged(object? sender, EventArgs e) => RefreshUndoButtons();
+
+    private void RefreshUndoButtons()
+    {
+        if (UndoButton is not null) UndoButton.IsEnabled = _undoStack.CanUndo;
+        if (RedoButton is not null) RedoButton.IsEnabled = _undoStack.CanRedo;
+    }
+
+    private void Undo_Click(object sender, RoutedEventArgs e) => _undoStack.Undo();
+    private void Redo_Click(object sender, RoutedEventArgs e) => _undoStack.Redo();
 
     private void DragBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) =>
         WindowChromeInterop.BeginTitleBarDrag(this);

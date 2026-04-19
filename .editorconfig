@@ -43,3 +43,5 @@ dotnet_diagnostic.CA1051.severity = none
 # CA1859: Prefer concrete types over interfaces — micro-perf, conflicts with
 # legitimate polymorphism (e.g. loaders returning a common BitmapSource)
 dotnet_diagnostic.CA1859.severity = none
+# CA1711: Suffix naming rule is too strict for domain types like UndoStack
+dotnet_diagnostic.CA1711.severity = none
