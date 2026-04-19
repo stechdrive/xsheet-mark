@@ -1,0 +1,37 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{xaml,xml,csproj,props,targets}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.cs]
+# Language features
+dotnet_sort_system_directives_first = true
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+csharp_prefer_braces = when_multiline:warning
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+
+# Ignore noisy diagnostics for a small WPF app
+# CA1031: Do not catch general exception types — fine for top-level handlers
+dotnet_diagnostic.CA1031.severity = none
+# CA1303: Do not pass literals as localized parameters — not localizing yet
+dotnet_diagnostic.CA1303.severity = none
+# CA1812: Avoid uninstantiated internal classes — WPF instantiates via XAML
+dotnet_diagnostic.CA1812.severity = none
+# CA1051: Do not declare visible instance fields — relaxed for private/internal
+dotnet_diagnostic.CA1051.severity = none
